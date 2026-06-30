@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "verify": "tsc --noEmit && vitest run",
-    "gallery": "tsx ./scripts/build-gallery.tsx"
+    "gallery": "tsx --tsconfig ./tsconfig.app.json ./scripts/build-gallery.tsx"
   },
   "dependencies": {
     "@fontsource/playfair-display": "^5.2.8",
