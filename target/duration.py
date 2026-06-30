@@ -3,8 +3,8 @@
 import re
 
 _UNIT_SECONDS = {"h": 3600, "m": 60, "s": 1}
-_TOKEN_RE = re.compile(r"(\d+)([hms])")
-_FULL_RE = re.compile(r"(?:\d+[hms])+")
+_TOKEN_RE = re.compile(r"([0-9]+)([hms])")
+_FULL_RE = re.compile(r"(?:[0-9]+[hms])+")
 
 
 def parse_duration(s: str) -> int:

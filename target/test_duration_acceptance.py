@@ -34,6 +34,11 @@ class TestParseDuration(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse_duration("5x")
 
+    def test_unicode_digits_raise(self):
+        # Arabic-Indic digit one (U+0661) is not an ASCII duration; must be rejected.
+        with self.assertRaises(ValueError):
+            parse_duration("١h")
+
 
 if __name__ == "__main__":
     unittest.main()
