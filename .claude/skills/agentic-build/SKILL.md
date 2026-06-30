@@ -13,6 +13,9 @@ The machine turns a STAGE goal into verified, committed code one atomic STEP at 
 3. Invoke the Workflow tool: `{ "scriptPath": "00_SYSTEM/engine/build-loop.mjs" }`.
 4. Review the returned summary, then the artifacts under `30_BUILD/STAGES/STAGE_01/`.
 
+### UI components
+Pass `args: { "profile": "ui" }` to build a React component (Designer + design gates: tsc/vitest/jest-axe + sn-ui-checklist + web-design-guidelines) instead of code. The HTML gallery at `40_DESIGN/gallery/` updates automatically.
+
 ## Falsify (prove the gate works)
 Plant a broken implementation, then run `{ "scriptPath": "00_SYSTEM/engine/build-loop.mjs", "args": { "mode": "falsify" } }`. Expect `committed: false` and HEAD unchanged.
 

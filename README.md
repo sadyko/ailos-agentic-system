@@ -15,3 +15,10 @@ Invoke the Workflow tool on `00_SYSTEM/engine/build-loop.mjs`. The loop:
 Planner → Reviewer → (per STEP) Explorer → Implementer → Critic + controllers → gated commit.
 
 The creed: **read state from disk → build a bounded frame → run one atomic agent task → validate at a gate → if PASS advance, if FAIL rework. The model is the worker; the vault is the truth.**
+
+## UI / component library (the `ui` profile)
+Build accessible React components into the library:
+- Run the Workflow tool: `{ "scriptPath": "00_SYSTEM/engine/build-loop.mjs", "args": { "profile": "ui" } }`.
+- Components: `target/ui/` (gate: `npm --prefix target/ui run verify` = tsc + vitest + jest-axe).
+- Library cards: `40_DESIGN/COMPONENTS/`. Design tokens: `40_DESIGN/DESIGN_TOKENS.md`.
+- **Visual gallery:** open `40_DESIGN/gallery/index.html` in a browser to see every component (regenerated on each build).
