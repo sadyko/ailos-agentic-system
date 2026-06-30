@@ -138,7 +138,7 @@ for (let i = 0; i < steps.length; i++) {
         { label: 'ctrl:test:' + step.id, phase: 'Gate', schema: CTRL_SCHEMA }) },
       function () { return agent(
         frame(ROLES + '/CONTROLLERS/MARKER_GUARD.md', [], '',
-          'Inspect the changed files (' + step.files.join(', ') + ') via `git diff` and the working tree. FAIL on any leftover marker.'),
+          'Inspect the STEP\'s files (' + step.files.join(', ') + ') by reading their CURRENT contents on disk. Use `git diff` only as supplementary context — never rely on the diff alone, since a file committed by an earlier STEP shows an empty diff. FAIL on any leftover marker.'),
         { label: 'ctrl:marker:' + step.id, phase: 'Gate', schema: CTRL_SCHEMA }) },
     ])
     const critic = judged[0]
