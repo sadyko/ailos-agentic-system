@@ -19,5 +19,6 @@ test('engine enforces gate safety invariants', () => {
   assert.match(src, /gate\.green/, 'must compute a green gate')
   assert.match(src, /git commit/, 'must commit on green')
   assert.match(src, /mode === 'falsify'/, 'must support falsify mode')
+  assert.match(src, /typeof args === 'string'/, 'must normalize args that arrive as a JSON string')
   assert.match(src, /export const meta/, 'must export a meta block')
 })

@@ -20,7 +20,13 @@ const SEED = '00_SYSTEM/engine/seed/STAGE_01_GOAL.md'
 const ACCEPTANCE = 'target/test_duration_acceptance.py'
 const TEST_CMD = 'python -m unittest discover -s target -p "test_*.py"'
 const MAX_RETRIES = 2
-const falsify = !!(args && args.mode === 'falsify')
+// `args` may arrive as a parsed object OR as a raw JSON string depending on the runtime; normalize both.
+const ARGS = (function () {
+  if (!args) return {}
+  if (typeof args === 'string') { try { return JSON.parse(args) } catch (e) { return {} } }
+  return args
+})()
+const falsify = !!(ARGS && ARGS.mode === 'falsify')
 
 // ---------- structured-output schemas ----------
 const PLAN_SCHEMA = { type: 'object', required: ['steps'], properties: { steps: { type: 'array', items: {
