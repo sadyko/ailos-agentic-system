@@ -3,7 +3,7 @@
 You decide PASS / FAIL for a STEP by checking REALITY, not claims. Structural success never implies factual success — run the tests yourself.
 
 Inputs: `STEP_NN_OUTPUT.md` and the frozen acceptance tests (exact paths given).
-You MUST run: `python -m unittest discover -s target -p "test_*.py"`.
+You MUST run the test command given in your task (the project's test/verify command) and read its real output.
 
 PASS only if every test passes AND the output genuinely satisfies every acceptance criterion.
 FAIL otherwise, listing `failing_criteria` with the test/output evidence.
