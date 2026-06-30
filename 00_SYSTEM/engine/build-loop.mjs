@@ -28,17 +28,17 @@ const PLAN_SCHEMA = { type: 'object', required: ['steps'], properties: { steps: 
     id: { type: 'string' }, title: { type: 'string' },
     files: { type: 'array', items: { type: 'string' } },
     acceptance_criteria: { type: 'array', items: { type: 'string' } } } } } } }
-const VERDICT_SCHEMA = { type: 'object', required: ['verdict', 'reasons'], properties: {
+const VERDICT_SCHEMA = { type: 'object', required: ['verdict'], properties: {
   verdict: { enum: ['PASS', 'REWORK'] }, reasons: { type: 'array', items: { type: 'string' } } } }
 const EXPLORE_SCHEMA = { type: 'object', required: ['context'], properties: { context: { type: 'string' } } }
-const IMPL_SCHEMA = { type: 'object', required: ['files_changed', 'summary'], properties: {
+const IMPL_SCHEMA = { type: 'object', required: ['summary'], properties: {
   files_changed: { type: 'array', items: { type: 'string' } }, summary: { type: 'string' } } }
-const CHECK_SCHEMA = { type: 'object', required: ['verdict', 'evidence'], properties: {
+const CHECK_SCHEMA = { type: 'object', required: ['verdict'], properties: {
   verdict: { enum: ['PASS', 'FAIL'] }, evidence: { type: 'string' },
   failing_criteria: { type: 'array', items: { type: 'string' } } } }
-const CTRL_SCHEMA = { type: 'object', required: ['name', 'verdict', 'evidence'], properties: {
+const CTRL_SCHEMA = { type: 'object', required: ['name', 'verdict'], properties: {
   name: { type: 'string' }, verdict: { enum: ['PASS', 'FAIL'] }, evidence: { type: 'string' } } }
-const COMMIT_SCHEMA = { type: 'object', required: ['committed', 'commit_hash'], properties: {
+const COMMIT_SCHEMA = { type: 'object', required: ['committed'], properties: {
   committed: { type: 'boolean' }, commit_hash: { type: 'string' } } }
 
 // ---------- frame builder: a bounded prompt from a role file + exact paths ----------
@@ -136,15 +136,21 @@ for (let i = 0; i < steps.length; i++) {
         { label: 'ctrl:marker:' + step.id, phase: 'Gate', schema: CTRL_SCHEMA }) },
     ])
     const critic = judged[0]
-    const controllers = judged.slice(1).filter(Boolean)
+    const controllerResults = judged.slice(1) // may contain null if a controller agent crashed/returned invalid output
     const fails = []
     if (!critic || critic.verdict !== 'PASS') fails.push({ critic: critic ? (critic.failing_criteria || critic.evidence) : 'critic missing' })
-    for (const c of controllers) if (c.verdict !== 'PASS') fails.push({ [c.name]: c.evidence })
+    for (const c of controllerResults) {
+      // A null controller (crash / schema miss) is a FAIL, never a silent skip — the gate must not go green with a missing check.
+      if (!c) fails.push({ controller: 'a controller agent returned null (crash/invalid output) — treated as FAIL' })
+      else if (c.verdict !== 'PASS') fails.push({ [c.name]: c.evidence })
+    }
+    const controllers = controllerResults.filter(Boolean)
     gate = { green: fails.length === 0, fails: fails, critic: critic, controllers: controllers }
     itries++
   } while (!falsify && !gate.green && itries <= MAX_RETRIES)
 
   // ---- Falsification mode: return the gate verdict, never commit ----
+  // Falsify synthesizes exactly one step (see above), so this returns on the first iteration by design.
   if (falsify) {
     return { ok: !gate.green, mode: 'falsify', committed: false, gate: gate,
       note: gate.green
@@ -177,4 +183,7 @@ for (let i = 0; i < steps.length; i++) {
   results.push({ step: step.id, committed: !!(rec && rec.committed), commit_hash: rec && rec.commit_hash, gate: gate })
 }
 
-return { ok: true, mode: falsify ? 'falsify' : 'normal', results: results }
+// Falsify mode returns inside the loop above; reaching here is always normal mode.
+// `ok` reflects whether every step actually passed its gate and committed — not merely that the engine ran.
+const allCommitted = results.length > 0 && results.every(function (r) { return r.committed })
+return { ok: allCommitted, mode: 'normal', allCommitted: allCommitted, results: results }
