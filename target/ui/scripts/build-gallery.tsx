@@ -22,6 +22,8 @@ function page(title: string, body: string): string {
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>${title}</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,400;1,500&display=swap" rel="stylesheet" />
 <script>tailwind.config = ${tailwindConfig}</script>
 </head><body class="bg-neutral-50 text-neutral-900 p-8">${body}</body></html>`
 }
