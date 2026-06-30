@@ -73,7 +73,7 @@ FOR EACH STEP (sequential — never parallel on shared files):
 return final summary for human review
 ```
 
-Invariants enforced in code: one atomic STEP per Implementer pass; sequential STEPs; **no commit without all-green**; `last_verified_commit` advances only on green; every rework loop has a max-tries bound that, when exhausted, halts and logs to `issues.md` rather than committing.
+Invariants enforced in code: one atomic STEP per Implementer pass; sequential STEPs; **no commit without all-green**; `last_verified_commit` advances only on green. Each rework loop is bounded to **2 retry attempts** (3 total tries); on exhaustion the engine halts that STEP, logs to `issues.md`, and returns without committing rather than looping forever.
 
 ### 4.4 Memory discipline (persisted vs. ephemeral)
 
