@@ -1,6 +1,6 @@
 export const meta = {
   name: 'build-loop',
-  description: 'Agentic build engine: Planner -> Reviewer -> [Explorer -> Implementer -> Critic + controllers] -> gated commit. The vault is the truth; the model is the worker.',
+  description: 'Agentic build engine (profile-driven): Planner -> Reviewer -> [Explorer -> Implementer -> Critic + controllers] -> gated commit. The vault is the truth; the model is the worker.',
   phases: [
     { title: 'Plan' },
     { title: 'Build' },
@@ -9,24 +9,51 @@ export const meta = {
   ],
 }
 
-// ---------- paths (relative to workspace root) ----------
+// ---------- shared vault paths (profile-independent) ----------
 const ROLES = '00_SYSTEM/ROLES'
-const STAGE_DIR = '30_BUILD/STAGES/STAGE_01'
-const STEPS_DIR = STAGE_DIR + '/STEPS'
 const ISSUES = '30_BUILD/issues.md'
 const LVC = '30_BUILD/last_verified_commit.md'
 const DECISIONS = '99_LOG/DECISIONS.md'
-const SEED = '00_SYSTEM/engine/seed/STAGE_01_GOAL.md'
-const ACCEPTANCE = 'target/test_duration_acceptance.py'
-const TEST_CMD = 'python -m unittest discover -s target -p "test_*.py"'
 const MAX_RETRIES = 2
-// `args` may arrive as a parsed object OR as a raw JSON string depending on the runtime; normalize both.
+
+// ---------- args (may arrive as a parsed object OR a raw JSON string) ----------
 const ARGS = (function () {
   if (!args) return {}
   if (typeof args === 'string') { try { return JSON.parse(args) } catch (e) { return {} } }
   return args
 })()
-const falsify = !!(ARGS && ARGS.mode === 'falsify')
+const falsify = ARGS.mode === 'falsify'
+
+// ---------- build profiles ----------
+const PROFILES = {
+  code: {
+    name: 'code',
+    seed: '00_SYSTEM/engine/seed/STAGE_01_GOAL.md',
+    acceptance: 'target/test_duration_acceptance.py',
+    testCmd: 'python -m unittest discover -s target -p "test_*.py"',
+    targetDir: 'target/',
+    stageDir: '30_BUILD/STAGES/STAGE_01',
+    implementerRole: 'IMPLEMENTER.md',
+    controllers: ['CONTROLLERS/TEST_COVERAGE.md', 'CONTROLLERS/MARKER_GUARD.md'],
+    postStepCmd: null,
+    falsifyFiles: ['target/duration.py'],
+  },
+  ui: {
+    name: 'ui',
+    seed: '00_SYSTEM/engine/seed/UI_BUTTON_GOAL.md',
+    acceptance: 'target/ui/src/components/Button/Button.acceptance.test.tsx',
+    testCmd: 'npm --prefix target/ui run verify',
+    targetDir: 'target/ui/',
+    stageDir: '30_BUILD/STAGES/UI_STAGE_01',
+    implementerRole: 'DESIGNER.md',
+    controllers: ['CONTROLLERS/UI_BUILD.md', 'CONTROLLERS/UI_CHECKLIST.md', 'CONTROLLERS/ACCESSIBILITY.md'],
+    postStepCmd: 'npm --prefix target/ui run gallery',
+    falsifyFiles: ['target/ui/src/components/Button/Button.tsx'],
+  },
+}
+const profile = PROFILES[ARGS.profile] || PROFILES.code
+const STAGE_DIR = profile.stageDir
+const STEPS_DIR = STAGE_DIR + '/STEPS'
 
 // ---------- structured-output schemas ----------
 const PLAN_SCHEMA = { type: 'object', required: ['steps'], properties: { steps: { type: 'array', items: {
@@ -47,7 +74,7 @@ const CTRL_SCHEMA = { type: 'object', required: ['name', 'verdict'], properties:
 const COMMIT_SCHEMA = { type: 'object', required: ['committed'], properties: {
   committed: { type: 'boolean' }, commit_hash: { type: 'string' } } }
 
-// ---------- frame builder: a bounded prompt from a role file + exact paths ----------
+// ---------- frame builder: bounded prompt from a role file + exact paths ----------
 function frame(roleFile, reads, writePath, task, extra) {
   return [
     'You are one role in an agentic build system. FIRST Read your role definition and obey it exactly:',
@@ -65,14 +92,14 @@ function frame(roleFile, reads, writePath, task, extra) {
 // ===================== PHASE: PLAN (Planner -> Reviewer, bounded rework) =====================
 let steps
 if (falsify) {
-  steps = [{ id: 'STEP_01', title: 'parse_duration (falsification: planted broken file)',
-    files: ['target/duration.py'], acceptance_criteria: ['the frozen acceptance suite must pass'] }]
+  steps = [{ id: 'STEP_01', title: '(falsification: planted broken file)',
+    files: profile.falsifyFiles, acceptance_criteria: ['the frozen acceptance suite must pass'] }]
 } else {
   phase('Plan')
   let plan, review, ptries = 0
   do {
     plan = await agent(
-      frame(ROLES + '/PLANNER.md', [SEED, ACCEPTANCE], STAGE_DIR + '/STAGE_PLAN.md',
+      frame(ROLES + '/PLANNER.md', [profile.seed, profile.acceptance], STAGE_DIR + '/STAGE_PLAN.md',
         'Read the STAGE goal and the frozen acceptance tests. Decompose the goal into atomic STEPs with explicit, testable acceptance criteria mapped to the tests. Write STAGE_PLAN.md and return the steps.'),
       { label: 'planner', phase: 'Plan', schema: PLAN_SCHEMA })
     if (!plan) return { ok: false, where: 'plan', reason: 'planner produced nothing' }
@@ -101,12 +128,12 @@ for (let i = 0; i < steps.length; i++) {
   if (!falsify) {
     phase('Build')
     ctx = await agent(
-      frame(ROLES + '/EXPLORER.md', ['target/'], '',
+      frame(ROLES + '/EXPLORER.md', [profile.targetDir], '',
         'Gather minimal read-only context for ' + step.id + ' (' + step.title + '). Files in scope: ' + step.files.join(', ') + '.'),
       { label: 'explorer:' + step.id, phase: 'Build', schema: EXPLORE_SCHEMA }) || ctx
   }
 
-  // ---- Implementer -> Gate, bounded rework ----
+  // ---- Implementer/Designer -> Gate, bounded rework ----
   let gate, itries = 0
   do {
     if (!falsify) {
@@ -115,50 +142,47 @@ for (let i = 0; i < steps.length; i++) {
         ? '\nThis is REWORK attempt ' + itries + '. The gate FAILED with: ' + JSON.stringify(gate.fails) + '. Fix EXACTLY these and nothing else.'
         : ''
       const impl = await agent(
-        frame(ROLES + '/IMPLEMENTER.md', [ACCEPTANCE], outPath,
+        frame(ROLES + '/' + profile.implementerRole, [profile.acceptance], outPath,
           'Implement ' + step.id + ': ' + step.title + '. Acceptance criteria:\n- ' + step.acceptance_criteria.join('\n- ') +
           '\nExplorer context:\n' + ctx.context +
-          '\nMake the frozen acceptance tests pass; do NOT modify them. Write/modify ONLY: ' + step.files.join(', ') + '. Then write ' + outPath + '.' + reworkNote),
+          '\nMake the frozen acceptance tests pass; do NOT modify them. Write/modify ONLY: ' + step.files.join(', ') + ' (plus the component story + library card if your role requires them). Then write ' + outPath + '.' + reworkNote),
         { label: 'implementer:' + step.id, phase: 'Build', schema: IMPL_SCHEMA })
       if (!impl) return { ok: false, where: 'implement', step: step.id, reason: 'implementer produced nothing' }
     }
 
-    // ---- Gate: Critic + controllers (parallel, read-only judging) ----
+    // ---- Gate: Critic + the profile's controllers (parallel, read-only judging) ----
     phase('Gate')
-    const judged = await parallel([
+    const tasks = [
       function () { return agent(
-        frame(ROLES + '/CRITIC.md', [outPath, ACCEPTANCE], checkPath,
-          'Validate ' + step.id + ' against its acceptance criteria. You MUST run the tests yourself: `' + TEST_CMD + '`. ' +
+        frame(ROLES + '/CRITIC.md', [outPath, profile.acceptance], checkPath,
+          'Validate ' + step.id + ' against its acceptance criteria. You MUST run the test command yourself: `' + profile.testCmd + '`. ' +
           (falsify ? 'The OUTPUT artifact may be absent; judge solely by running the tests. ' : '') +
           'Acceptance criteria:\n- ' + step.acceptance_criteria.join('\n- ') + '\nWrite ' + checkPath + ' and return the verdict.'),
         { label: 'critic:' + step.id, phase: 'Gate', schema: CHECK_SCHEMA }) },
-      function () { return agent(
-        frame(ROLES + '/CONTROLLERS/TEST_COVERAGE.md', [], '',
-          'Run `' + TEST_CMD + '`. PASS only if it reports OK with zero failures/errors.'),
-        { label: 'ctrl:test:' + step.id, phase: 'Gate', schema: CTRL_SCHEMA }) },
-      function () { return agent(
-        frame(ROLES + '/CONTROLLERS/MARKER_GUARD.md', [], '',
-          'Inspect the STEP\'s files (' + step.files.join(', ') + ') by reading their CURRENT contents on disk. Use `git diff` only as supplementary context — never rely on the diff alone, since a file committed by an earlier STEP shows an empty diff. FAIL on any leftover marker.'),
-        { label: 'ctrl:marker:' + step.id, phase: 'Gate', schema: CTRL_SCHEMA }) },
-    ])
+    ]
+    for (const ctrl of profile.controllers) {
+      const ctrlFile = ctrl
+      tasks.push(function () { return agent(
+        frame(ROLES + '/' + ctrlFile, [], '',
+          'Apply your controller role to ' + step.id + ' (' + step.title + '). Project test/verify command: `' + profile.testCmd + '`. Files in scope: ' + step.files.join(', ') + '. Read your role file and follow it exactly.'),
+        { label: 'ctrl:' + ctrlFile.replace(/.*\//, '').replace('.md', '') + ':' + step.id, phase: 'Gate', schema: CTRL_SCHEMA }) })
+    }
+    const judged = await parallel(tasks)
     const critic = judged[0]
-    const controllerResults = judged.slice(1) // may contain null if a controller agent crashed/returned invalid output
+    const controllerResults = judged.slice(1)
     const fails = []
     if (!critic || critic.verdict !== 'PASS') fails.push({ critic: critic ? (critic.failing_criteria || critic.evidence) : 'critic missing' })
     for (const c of controllerResults) {
-      // A null controller (crash / schema miss) is a FAIL, never a silent skip — the gate must not go green with a missing check.
       if (!c) fails.push({ controller: 'a controller agent returned null (crash/invalid output) — treated as FAIL' })
       else if (c.verdict !== 'PASS') fails.push({ [c.name]: c.evidence })
     }
-    const controllers = controllerResults.filter(Boolean)
-    gate = { green: fails.length === 0, fails: fails, critic: critic, controllers: controllers }
+    gate = { green: fails.length === 0, fails: fails, critic: critic, controllers: controllerResults.filter(Boolean) }
     itries++
   } while (!falsify && !gate.green && itries <= MAX_RETRIES)
 
   // ---- Falsification mode: return the gate verdict, never commit ----
-  // Falsify synthesizes exactly one step (see above), so this returns on the first iteration by design.
   if (falsify) {
-    return { ok: !gate.green, mode: 'falsify', committed: false, gate: gate,
+    return { ok: !gate.green, mode: 'falsify', profile: profile.name, committed: false, gate: gate,
       note: gate.green
         ? 'FALSIFICATION FAILED: gate passed a deliberately broken file'
         : 'OK: gate correctly FAILED the deliberately broken file' }
@@ -174,22 +198,21 @@ for (let i = 0; i < steps.length; i++) {
     continue
   }
 
-  // ---- GREEN: commit + record (a recorder agent performs git/fs; the script cannot) ----
+  // ---- GREEN: (optional post-step) + commit + record (a recorder agent does git/fs) ----
   phase('Record')
   const rec = await agent(
     'All gates passed for ' + step.id + '. Do EXACTLY, in order, using Bash:\n' +
+    (profile.postStepCmd ? '0. Run `' + profile.postStepCmd + '` (regenerates the component gallery).\n' : '') +
     '1. `git add -A`\n' +
     '2. `git commit -m "build(' + step.id + '): ' + step.title + '"`\n' +
     '3. `git rev-parse HEAD` to capture the commit hash\n' +
     '4. Write that hash as the ONLY line of ' + LVC + '\n' +
-    '5. Append one line to ' + DECISIONS + ' (read it first if present, then append, then write back): "<UTC date>  ' + step.id + '  PASS  <hash>"\n' +
+    '5. Append one line to ' + DECISIONS + ' (read it first if present, then append, then write back): "<UTC date>  ' + profile.name + '  ' + step.id + '  PASS  <hash>"\n' +
     '6. `git add ' + LVC + ' ' + DECISIONS + ' && git commit -m "chore(' + step.id + '): record verified commit"`\n' +
     'Return {"committed":true,"commit_hash":"<hash>"}.',
     { label: 'record:' + step.id, phase: 'Record', schema: COMMIT_SCHEMA })
   results.push({ step: step.id, committed: !!(rec && rec.committed), commit_hash: rec && rec.commit_hash, gate: gate })
 }
 
-// Falsify mode returns inside the loop above; reaching here is always normal mode.
-// `ok` reflects whether every step actually passed its gate and committed — not merely that the engine ran.
 const allCommitted = results.length > 0 && results.every(function (r) { return r.committed })
-return { ok: allCommitted, mode: 'normal', allCommitted: allCommitted, results: results }
+return { ok: allCommitted, mode: 'normal', profile: profile.name, allCommitted: allCommitted, results: results }

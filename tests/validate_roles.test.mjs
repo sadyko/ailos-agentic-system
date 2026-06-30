@@ -7,9 +7,13 @@ const REQUIRED = [
   ['00_SYSTEM/ROLES/REVIEWER.md',                    [/well-posed/i, /PASS/, /REWORK/]],
   ['00_SYSTEM/ROLES/EXPLORER.md',                    [/read-only/i, /"context"/]],
   ['00_SYSTEM/ROLES/IMPLEMENTER.md',                 [/ONE atomic/i, /do NOT modify/i, /"files_changed"/]],
-  ['00_SYSTEM/ROLES/CRITIC.md',                      [/run the tests/i, /unittest/, /"verdict"/]],
+  ['00_SYSTEM/ROLES/CRITIC.md',                      [/run the test command/i, /"verdict"/]],
   ['00_SYSTEM/ROLES/CONTROLLERS/TEST_COVERAGE.md',   [/unittest/, /TEST_COVERAGE/]],
   ['00_SYSTEM/ROLES/CONTROLLERS/MARKER_GUARD.md',    [/git diff/i, /MARKER_GUARD/, /TODO/]],
+  ['00_SYSTEM/ROLES/DESIGNER.md',                    [/frontend-design/i, /design tokens/i, /do NOT modify/i, /stories/i]],
+  ['00_SYSTEM/ROLES/CONTROLLERS/UI_BUILD.md',        [/run verify/i, /jest-axe|axe/i, /UI_BUILD/]],
+  ['00_SYSTEM/ROLES/CONTROLLERS/UI_CHECKLIST.md',    [/Typography/i, /Layout/i, /Color/i, /UI_CHECKLIST/]],
+  ['00_SYSTEM/ROLES/CONTROLLERS/ACCESSIBILITY.md',   [/accessible name|aria|role/i, /ACCESSIBILITY/]],
 ]
 
 for (const [file, patterns] of REQUIRED) {
