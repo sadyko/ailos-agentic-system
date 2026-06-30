@@ -8,6 +8,8 @@ assistive technology out of the box.
 - Stories: [`../../target/ui/src/components/Button/Button.stories.tsx`](../../target/ui/src/components/Button/Button.stories.tsx)
 - Gallery: [`../gallery/Button.html`](../gallery/Button.html)
 
+> **Note:** The gallery preview (`../gallery/Button.html`) is rendered with Tailwind via CDN for offline viewing; the app itself is styled by the real Tailwind build in `target/ui`.
+
 ## Anatomy
 
 ```
@@ -31,7 +33,7 @@ forwarded.
 | `variant`  | `'primary' \| 'secondary' \| 'ghost'`  | `'primary'` | Visual emphasis.                                                  |
 | `size`     | `'sm' \| 'md'`                         | `'md'`      | Height / padding / type scale.                                    |
 | `loading`  | `boolean`                              | `false`     | Shows a busy spinner, sets `aria-busy="true"`, and disables it.   |
-| `disabled` | `boolean`                              | `false`     | Native disabled state (forwarded to the element).                 |
+| `disabled` | `boolean`                              | `false`     | Disables the button. `loading` also forces the disabled state (so `loading` wins even if `disabled={false}`). |
 | `type`     | `'button' \| 'submit' \| 'reset'`      | `'button'`  | Defaults to `button` to avoid accidental form submission.         |
 | `children` | `ReactNode`                            | —           | The visible label and accessible name.                            |
 | `...rest`  | native button attributes               | —           | Spread onto the `<button>`.                                       |
