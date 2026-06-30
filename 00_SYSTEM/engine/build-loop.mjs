@@ -27,6 +27,7 @@ const falsify = ARGS.mode === 'falsify'
 // ---------- build profiles ----------
 const PROFILES = {
   code: {
+    name: 'code',
     seed: '00_SYSTEM/engine/seed/STAGE_01_GOAL.md',
     acceptance: 'target/test_duration_acceptance.py',
     testCmd: 'python -m unittest discover -s target -p "test_*.py"',
@@ -38,6 +39,7 @@ const PROFILES = {
     falsifyFiles: ['target/duration.py'],
   },
   ui: {
+    name: 'ui',
     seed: '00_SYSTEM/engine/seed/UI_BUTTON_GOAL.md',
     acceptance: 'target/ui/src/components/Button/Button.acceptance.test.tsx',
     testCmd: 'npm --prefix target/ui run verify',
@@ -180,7 +182,7 @@ for (let i = 0; i < steps.length; i++) {
 
   // ---- Falsification mode: return the gate verdict, never commit ----
   if (falsify) {
-    return { ok: !gate.green, mode: 'falsify', profile: ARGS.profile || 'code', committed: false, gate: gate,
+    return { ok: !gate.green, mode: 'falsify', profile: profile.name, committed: false, gate: gate,
       note: gate.green
         ? 'FALSIFICATION FAILED: gate passed a deliberately broken file'
         : 'OK: gate correctly FAILED the deliberately broken file' }
@@ -205,7 +207,7 @@ for (let i = 0; i < steps.length; i++) {
     '2. `git commit -m "build(' + step.id + '): ' + step.title + '"`\n' +
     '3. `git rev-parse HEAD` to capture the commit hash\n' +
     '4. Write that hash as the ONLY line of ' + LVC + '\n' +
-    '5. Append one line to ' + DECISIONS + ' (read it first if present, then append, then write back): "<UTC date>  ' + (ARGS.profile || 'code') + '  ' + step.id + '  PASS  <hash>"\n' +
+    '5. Append one line to ' + DECISIONS + ' (read it first if present, then append, then write back): "<UTC date>  ' + profile.name + '  ' + step.id + '  PASS  <hash>"\n' +
     '6. `git add ' + LVC + ' ' + DECISIONS + ' && git commit -m "chore(' + step.id + '): record verified commit"`\n' +
     'Return {"committed":true,"commit_hash":"<hash>"}.',
     { label: 'record:' + step.id, phase: 'Record', schema: COMMIT_SCHEMA })
@@ -213,4 +215,4 @@ for (let i = 0; i < steps.length; i++) {
 }
 
 const allCommitted = results.length > 0 && results.every(function (r) { return r.committed })
-return { ok: allCommitted, mode: 'normal', profile: ARGS.profile || 'code', allCommitted: allCommitted, results: results }
+return { ok: allCommitted, mode: 'normal', profile: profile.name, allCommitted: allCommitted, results: results }
