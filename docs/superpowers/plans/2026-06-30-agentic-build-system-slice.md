@@ -80,7 +80,7 @@ touch 30_BUILD/STAGES/STAGE_01/STEPS/.gitkeep 99_LOG/.gitkeep
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/"
+    "test": "node --test"
   }
 }
 ```
@@ -105,7 +105,7 @@ test('vault skeleton exists', () => {
 
 - [ ] **Step 4: Run the test**
 
-Run: `node --test tests/`
+Run: `node --test`
 Expected: `# pass 1`, `# fail 0`.
 
 - [ ] **Step 5: Commit**
@@ -761,7 +761,7 @@ git commit -m "feat: build-loop Workflow engine + syntax/invariant validator"
 
 - [ ] **Step 1: Confirm all unit validators are green first**
 
-Run: `node --test tests/`
+Run: `node --test`
 Expected: all tests pass (`# fail 0`). Do not proceed otherwise.
 
 - [ ] **Step 2: Run the engine via the Workflow tool**
@@ -914,7 +914,7 @@ A Claude Code-native machine that builds working code one verified atomic step a
 - How to run: see the `agentic-build` skill (`.claude/skills/agentic-build/SKILL.md`).
 
 ## Test the machine's own scaffolding
-`node --test tests/`
+`node --test`
 
 ## Run the build loop
 Invoke the Workflow tool on `00_SYSTEM/engine/build-loop.mjs`. The loop:
@@ -925,7 +925,7 @@ The creed: **read state from disk → build a bounded frame → run one atomic a
 
 - [ ] **Step 3: Confirm everything still validates**
 
-Run: `node --test tests/`
+Run: `node --test`
 Expected: all pass.
 
 - [ ] **Step 4: Commit**
