@@ -428,7 +428,7 @@ export function FeatureSections({
         <motion.div className="mb-16 text-center" {...headerMotion}>
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-neutral-100 bg-white px-4 py-2">
             <Sparkles className="h-4 w-4 text-brand-600" aria-hidden="true" />
-            <span className="text-sm font-medium text-neutral-500">
+            <span className="text-sm font-medium text-neutral-700">
               {badge}
             </span>
           </div>
@@ -462,7 +462,7 @@ export function FeatureSections({
                 <h3 className="mb-1 text-lg font-semibold text-neutral-900">
                   {feature.title}
                 </h3>
-                <p className="text-sm leading-relaxed text-neutral-500">
+                <p className="text-sm leading-relaxed text-neutral-700">
                   {feature.description}
                 </p>
               </div>

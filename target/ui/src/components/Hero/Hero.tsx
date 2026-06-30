@@ -101,7 +101,7 @@ export function Hero({
           <span className="rounded-xs border border-neutral-100 bg-white px-1.5 py-0.5 font-mono text-xs text-neutral-900 shadow-sm">
             {badge}
           </span>
-          <span className="text-xs text-neutral-500">accepting new client projects</span>
+          <span className="text-xs text-neutral-700">accepting new client projects</span>
           <span className="block h-5 border-l border-neutral-100" aria-hidden="true" />
           <span className="pr-1">
             <ArrowRight className="size-3 -translate-x-0.5 text-neutral-500 transition-transform duration-150 ease-out group-hover:translate-x-0.5" aria-hidden="true" />
@@ -116,7 +116,7 @@ export function Hero({
         </motion.h1>
 
         <motion.p
-          className="text-sm tracking-wide text-neutral-500 sm:text-lg md:text-xl"
+          className="text-sm tracking-wide text-neutral-700 sm:text-lg md:text-xl"
           {...itemMotion}
         >
           {subtitle}
