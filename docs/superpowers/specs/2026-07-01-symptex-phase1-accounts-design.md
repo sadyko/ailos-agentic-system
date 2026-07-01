@@ -1,6 +1,8 @@
+> ⚠️ **SUPERSEDED (2026-07-01).** This draft was written against the STALE copy `/var/www/symptex`. The LIVE site runs from `/var/www/symptex-next`, which already has a mature Supabase schema (`users` with `password_hash`+`roles[]`, `clinics`, `doctors`, `registrator_clinics`, `invite_tokens`, `api_keys`, …). The `sx_accounts`/`sx_clinics`/`sx_doctors` design below is WRONG — do not build it. See the revised spec: `2026-07-01-symptex-phase1-accounts-design-v2.md`.
+
 # Symptex — Phase 1: Accounts & Identity (design)
 
-**Date:** 2026-07-01 · **Status:** approved (owner) → ready for implementation plan
+**Date:** 2026-07-01 · **Status:** SUPERSEDED by v2
 **Owner-facing goal:** real logins for clinics, doctors, and registrators, plus admin/clinic screens to create those accounts. This is the foundation the rest of the Symptex build depends on.
 
 ---

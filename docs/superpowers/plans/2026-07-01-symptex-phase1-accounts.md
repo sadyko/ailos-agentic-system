@@ -1,5 +1,7 @@
 # Symptex Phase 1 — Accounts & Identity Implementation Plan
 
+> ⚠️ **SUPERSEDED (2026-07-01) — DO NOT EXECUTE.** Built against the stale `/var/www/symptex` copy and creates parallel `sx_` tables. The live site (`/var/www/symptex-next`) already has `users`/`clinics`/`doctors`/`registrator_clinics`. Use the revised plan once written. See `docs/superpowers/specs/2026-07-01-symptex-phase1-accounts-design-v2.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Give Symptex real phone+password logins for admin/clinic/doctor/registrator, backed by its own Supabase, with admin/clinic screens to create those accounts.
