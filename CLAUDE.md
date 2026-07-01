@@ -31,6 +31,8 @@ To build something new, write its goal to the profile's seed (`00_SYSTEM/engine/
 
 Put screenshot/design references in `40_DESIGN/refs/` and point the component's seed goal at them. The owner verifies look-and-feel by opening the gallery HTML in a browser (the gate checks accessibility + structure + design-checklist, not pixel-match — that visual check is the human's).
 
+**Theme comes from the project, not shadcn.** The library is shadcn-native (components from the shadcn CLI/registry), but the palette/typography/mode are always derived from the product's domain — see `40_DESIGN/THEMING.md`. Map the project's brand into shadcn's CSS variables (`--primary`, …); never ship shadcn's default gray. Medical → calm clinical, no harsh dark/black-white. Dark mode is opt-in. Never use emojis in UI — use real (lucide) icons.
+
 ## Non-negotiables
 
 - One atomic step per run; steps are sequential; **no commit without all gates green** (a crashed controller counts as FAIL).

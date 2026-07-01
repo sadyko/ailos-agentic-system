@@ -38,6 +38,20 @@ async function loadStories(dir: string): Promise<{ component: string; stories: S
 }
 
 const all = await loadStories(COMPONENTS_DIR)
+
+// Also discover flat shadcn-style stories in src/stories/*.stories.tsx
+const STORIES_DIR = join(ROOT, 'src', 'stories')
+if (existsSync(STORIES_DIR)) {
+  for (const entry of readdirSync(STORIES_DIR, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith('.stories.tsx')) continue
+    const mod = await import(pathToFileURL(join(STORIES_DIR, entry.name)).href)
+    if (Array.isArray(mod.stories)) {
+      const component = typeof mod.name === 'string' ? mod.name : entry.name.replace('.stories.tsx', '')
+      all.push({ component, stories: mod.stories })
+    }
+  }
+}
+
 if (!existsSync(OUT_DIR)) mkdirSync(OUT_DIR, { recursive: true })
 
 for (const { component, stories } of all) {
