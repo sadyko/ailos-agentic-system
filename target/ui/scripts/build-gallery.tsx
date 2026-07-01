@@ -1,9 +1,8 @@
-import { readdirSync, existsSync, mkdirSync, writeFileSync } from 'node:fs'
+import { readdirSync, existsSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs'
 import { join, resolve, dirname } from 'node:path'
 import { pathToFileURL, fileURLToPath } from 'node:url'
 import { renderToStaticMarkup } from 'react-dom/server'
 import type { ReactElement } from 'react'
-import { tokens } from '../src/tokens'
 
 type Story = { name: string; element: ReactElement }
 
@@ -13,16 +12,15 @@ const ROOT = resolve(__dirname, '..')                    // target/ui
 const COMPONENTS_DIR = join(ROOT, 'src', 'components')
 const OUT_DIR = resolve(ROOT, '..', '..', '40_DESIGN', 'gallery')   // repo-root/40_DESIGN/gallery
 
-const tailwindConfig = JSON.stringify({
-  theme: { extend: { colors: { brand: tokens.colors.brand, neutral: tokens.colors.neutral, danger: tokens.colors.danger }, borderRadius: tokens.radius } },
-})
+const COMPILED_CSS = readFileSync(resolve(__dirname, '.gallery.out.css'), 'utf8')
 
 function page(title: string, body: string): string {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>${title}</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>tailwind.config = ${tailwindConfig}</script>
+<style>${COMPILED_CSS}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,400;1,500&display=swap" rel="stylesheet" />
 </head><body class="bg-neutral-50 text-neutral-900 p-8">${body}</body></html>`
 }
 

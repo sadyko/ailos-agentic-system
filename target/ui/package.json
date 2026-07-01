@@ -9,13 +9,19 @@
     "preview": "vite preview",
     "test": "vitest run",
     "verify": "tsc --noEmit && vitest run",
-    "gallery": "tsx ./scripts/build-gallery.tsx"
+    "gallery": "tailwindcss -i ./scripts/gallery.css -o ./scripts/.gallery.out.css --minify && tsx --tsconfig ./tsconfig.app.json ./scripts/build-gallery.tsx"
   },
   "dependencies": {
+    "@fontsource/playfair-display": "^5.2.8",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.22.0",
+    "motion": "^12.42.1",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.3.2",
     "@tailwindcss/vite": "^4.3.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

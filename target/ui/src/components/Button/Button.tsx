@@ -36,8 +36,8 @@ const variants: Record<Variant, string> = {
     'bg-brand-600 text-neutral-50 hover:bg-brand-700 active:bg-brand-700 ' +
     'disabled:hover:bg-brand-600',
   secondary:
-    'bg-neutral-100 text-neutral-900 hover:bg-neutral-300 active:bg-neutral-300 ' +
-    'disabled:hover:bg-neutral-100',
+    'border border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-100 active:bg-neutral-100 ' +
+    'disabled:hover:bg-white',
   ghost:
     'bg-transparent text-brand-700 hover:bg-brand-50 active:bg-brand-100 ' +
     'disabled:hover:bg-transparent',
@@ -79,7 +79,8 @@ export function Button({
           className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent"
         />
       ) : null}
-      <span>{children}</span>
+      {/* Children render as direct flex items so the button's gap-2 spaces an icon from its label. */}
+      {children}
     </button>
   )
 }
