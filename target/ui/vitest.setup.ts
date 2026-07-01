@@ -30,3 +30,22 @@ beforeAll(() => {
     }))
   }
 })
+
+import { beforeAll as _beforeAllRadix } from 'vitest'
+
+// Radix UI relies on browser APIs jsdom lacks; shim them so components render in tests.
+_beforeAllRadix(() => {
+  if (!('ResizeObserver' in globalThis)) {
+    // @ts-expect-error assign mock
+    globalThis.ResizeObserver = class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+  }
+  const proto = window.Element.prototype as unknown as Record<string, unknown>
+  if (!proto.hasPointerCapture) proto.hasPointerCapture = () => false
+  if (!proto.setPointerCapture) proto.setPointerCapture = () => {}
+  if (!proto.releasePointerCapture) proto.releasePointerCapture = () => {}
+  if (!proto.scrollIntoView) proto.scrollIntoView = () => {}
+})
