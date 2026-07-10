@@ -33,7 +33,7 @@ One Python process serves everything. Owner starts it by double-clicking `Start.
 - **Database:** SQLite (WAL mode), single file under `data/`. All state — calls, transcripts, scores, fixations, examples, coaching — lives here.
 - **Background worker:** in-process worker consuming a job queue table. Transcription jobs are serialized (one GPU job at a time); analysis (Claude API) jobs may run a few in parallel. Queue state is in SQLite, so it survives restarts.
 - **STT:** faster-whisper `large-v3` on CUDA. Wrapped behind a narrow `Transcriber` interface so it can later be swapped for a CPU build or a cloud STT API (the future server has no GPU). Setup verifies GPU availability and falls back to CPU int8 with a visible warning. Language auto-detect per file, VAD filter on, timestamped segments kept.
-- **Analysis:** Claude API via `anthropic` SDK. Model configurable in Settings (default: current Sonnet; cheaper Haiku offered as the low-cost option). System prompt is **assembled** from scorecard criteria + curated examples (see §6), versioned; every analysis records which prompt version and model produced it. Structured JSON output with per-criterion score **and one-line reason**.
+- **Analysis:** Claude API via `anthropic` SDK. Model configurable in Settings (default: the current Sonnet-class model — exact id pinned at implementation time from the live API docs; cheaper Haiku offered as the low-cost option). System prompt is **assembled** from scorecard criteria + curated examples (see §6), versioned; every analysis records which prompt version and model produced it. Structured JSON output with per-criterion score **and one-line reason**.
 - **TTS:** `edge-tts` (Microsoft neural voices, free, needs internet). Voices: ru-RU female/male, uz-UZ female/male. Output MP3s stored under `data/tts/`.
 - **Watched folder:** `incoming/` monitored via `watchdog`; new audio files are ingested (moved into managed storage) and queued automatically.
 - **Frontend:** React + TypeScript + Tailwind, built once to static files and served by FastAPI — the owner never runs node. UI language: Russian. Design: ailos medical style (calm clinical palette, lucide icons, no emojis).
@@ -52,7 +52,7 @@ One Python process serves everything. Owner starts it by double-clicking `Start.
 4. **Operators** — operator list; per-operator score trend over time, weakest criteria, open/resolved coaching items.
 5. **Scorecard** — criteria editor (labels, descriptions, 0–2 scale, active flag) + example library (see §6) + preview of the currently assembled scoring prompt + version history.
 6. **Text-to-voice** — free-text → language + voice → generate/play/download MP3; Scripts library below (named scripts with saved voiced audio).
-7. **Settings** — API key, model choice, watched-folder path, Whisper model size, filename→operator pattern, Backup button (zips DB + transcripts; audio excluded).
+7. **Settings** — API key, model choice, watched-folder path, Whisper model size, filename→operator pattern, Backup button (dated zip of the database — which holds all transcripts, scores, fixations, examples, coaching; bulky call audio excluded).
 
 ## 5. Call review screen (fixations)
 
@@ -79,7 +79,7 @@ No model retraining. The scoring system prompt = base QA instructions + active c
 ## 8. Data model (summary)
 
 - `operators(id, name, active, filename_alias)`
-- `calls(id, file_hash UNIQUE, original_filename, audio_path, operator_id?, source, status, error_msg?, duration_sec, detected_language, uploaded_at, call_date)`
+- `calls(id, file_hash UNIQUE, original_filename, audio_path, operator_id?, source, status, error_msg?, duration_sec, detected_language, uploaded_at, call_date)` — `call_date` parsed from the filename when the pattern allows, else the audio file's modified time, else upload time
 - `segments(id, call_id, idx, start_sec, end_sec, text_original, text_corrected?, edited_at?)`
 - `analyses(id, call_id, prompt_version_id, model, booking_result, missed_booking, summary, recommendation, raw_json, created_at)` — latest analysis is the display one; history kept
 - `analysis_scores(analysis_id, criterion_key, ai_score, ai_reason, reviewer_score?)`
@@ -97,7 +97,7 @@ No model retraining. The scoring system prompt = base QA instructions + active c
 - Dedup on upload/watch by content hash; duplicate → friendly "already in system" notice linking to the existing call.
 - Per-stage error status with message + Retry; automatic retry with backoff for Claude API calls.
 - Queue and all state in SQLite → restart-safe; `Start.bat` resumes pending work.
-- Backup button produces a dated zip of DB + transcripts.
+- Backup button produces a dated zip of the database file (transcripts included, since they live in the DB; audio excluded).
 - Whisper/CUDA unavailability degrades to CPU with a visible banner, never a crash.
 
 ## 10. Testing
