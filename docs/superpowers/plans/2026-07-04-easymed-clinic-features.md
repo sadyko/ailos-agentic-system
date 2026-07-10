@@ -2,6 +2,26 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+## EXECUTION STATUS — 2026-07-10 (all code deployed live)
+
+**Phases 1–4 are deployed and verified on the live server. Phase 0 (DDL) is staged, awaiting the owner running the SQL** (no working Supabase PAT on the box — the saved tokens are revoked, 401).
+
+| Piece | Status | Where |
+|---|---|---|
+| Phase 0 DDL | **staged, not run** | `/var/www/easymed.uz/supabase/migrations/102_clinic_features.sql` + runner `Desktop/appointment-mvp/migrations/apply_102_clinic_features.py` (needs fresh `sbp_` token via `SUPABASE_ACCESS_TOKEN`, or paste SQL into the dashboard SQL editor) |
+| 1.1 gateway `GET /company/flags` | ✅ deployed + verified | `easymed_client.company_flags()` is **defensive**: columns missing → `{custom_services_enabled:false, charge_discharge_day:false}` (today's behavior). Route 403 unauth, direct call returns defaults. |
+| 1.2 `clinic-flags.js` | ✅ | `js/admin/clinic-flags.js` — cached, fail-soft to `{}` |
+| 1.3 custom services form | ✅ | `section-crud.js` CUSTOM_CLINIC_V1: flag on → "Add service" opens the generic form (catalog wizard bypassed), `name/code/type_id/category_id` editable, insert leaves `core_service_id` null |
+| 1.4 picker grouping | ✅ | `service-picker-modal.js` + `appointments.js`: flag on → medcore-groups lookup skipped, column 1 = local `service_types` |
+| Phase 2 daily billing | ✅ (dormant until DDL + ward set daily) | `beds.js` DAILY_BILLING_V1: `effBilling()` + `daysStayed()` (admission day counts; discharge day dropped unless `charge_discharge_day`; min 1). Live ticker card + `recordAccommodationSegment` both branch; hourly path untouched. |
+| Phase 3 gateway | ✅ deployed + **data-tested end-to-end** | `POST /api/v1/inpatient/administer-drug` (ADMINISTER_DRUG_V1): log+bill+stock with rollback + negative-stock 422 guard (`allow_negative` to override). Test on live DB: receipt +5 → administer 2 → stock 3, guard fired at 100, zero leftovers after cleanup. |
+| Phase 3 SPA + Phase 4 Rx handoff | ✅ | **Plan deviation (better)**: discovered existing SECURITY-DEFINER RPCs `dispense_visit_item` / `dispense_admission_item` / `void_dispensed_*` — truly atomic bill+stock, already wired to "Выдать препарат" buttons in the doctor workspace (outpatient) and admission modal (stationary; reachable from beds + patient card). So instead of a new give-drug.js: (a) GIVE_DRUG_LOG_V1 — stationary dispense now also mirrors into `med_administrations` (nurse journal); (b) RX_DISPENSE_V1 — every doctor's Rx line in the admission «Назначения» tab got a **«Выдать»** button → item picker prefiltered by Rx name (`initialSearch` option added to `item-picker-modal.js`) → atomic RPC + journal entry. «Выполнено» (log-only) kept for patient-supplied drugs. Void = existing RPCs. |
+| Cache-bust | ✅ | all 13 affected modules + importers retagged `?v=clinic1` (also unified the previously-split vm14/vm15 visit-modal instances); `admin.html` → `admin.js?v=clinic1`. All live JS `node --check` clean; site + gateway healthy. |
+
+**Backups:** every touched file has `.bak-<ts>` next to it (`app/*.py.bak-*`, `js/admin/views/*.js.bak-*`, `js/admin.js.bak-*`, `admin.html.bak-*`).
+
+**Remaining (owner, ~1 min):** run the 5-line SQL (file above) → then flip the flag for the new clinic's company (`PATCH companies?id=eq.<id> {"custom_services_enabled": true}` via gateway service key — ask the machine to do it) and set the stationary ward to `billing_mode='daily'` + `price_per_day`. Everything activates instantly; until then all clinics behave exactly as before (verified).
+
 **Goal:** Add four features for a new small clinic — custom (non-catalog) services, daily (24h) stationary billing, unified outpatient+stationary drug orders (bill + stock), and prescription handoff — entirely inside EasyMed, gated on a per-clinic flag, without touching the medcore catalog or Symptex.
 
 **Architecture:** A DB migration adds columns that all default to today's behavior. The admin SPA reads the per-clinic flag and adapts: the services form becomes free-entry, the shared service picker groups by local `service_types`, bed billing computes in days, and a "Give drug" action calls a new atomic gateway endpoint that writes the med log + invoice line + stock movement together. The gateway (`/opt/easymed-api`, FastAPI, service-role) is the only server-side writer.
