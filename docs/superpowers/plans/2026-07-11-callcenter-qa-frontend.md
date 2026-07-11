@@ -1,5 +1,7 @@
 # Call-Center QA — Plan 2: Frontend (React UI) Implementation Plan
 
+> **STATUS: COMPLETE — 2026-07-11.** All 10 tasks executed via subagent-driven development with per-task spec + quality reviews and fix loops. Final whole-frontend review: approved (Yes). Gates: real `tsc -b` typecheck clean over 46 files, 105 vitest tests, 81 backend tests still green, server smoke serves the SPA at `/`. React 18 + TS + Vite + Tailwind v4, HashRouter, Aurora medical palette, Russian, lucide icons, zero emojis. Built SPA committed to `V2T T2V/static/`. Notable caught bug: frontend was sending `active: 1/0` where the backend's strict `isinstance(x, bool)` requires real booleans (fixed + contract-tested); and the `typecheck` script was a no-op (`tsc --noEmit` vs solution-style tsconfig → 0 files) until fixed to `tsc -b`. Deferred items in `V2T T2V/BACKLOG.md`. Next: real-data acceptance test (owner provides API key + 5–10 real recordings).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the complete Russian-language browser UI for the call-center QA backend (Plan 1, complete: 81 tests green) — 7 screens served as a static SPA by the existing FastAPI app — so the non-technical owner can upload, review, fix, teach, coach, voice, and configure without ever seeing an API.
