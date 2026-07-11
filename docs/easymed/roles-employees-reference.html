@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EasyMed — Roles &amp; Employees Reference</title>
+<style>
+  :root{
+    --bg:#f4f7f9; --surface:#ffffff; --surface-2:#eef3f6; --ink:#1a2830; --muted:#5c6b75;
+    --line:#dde5ea; --primary:#0e7c86; --primary-600:#0b6670; --primary-50:#e6f4f5;
+    --viewer:#64748b; --editor:#0e7c86; --admin:#b45309; --none:#c2ccd2;
+    --danger:#b42318; --ok:#0e7c86; --radius:12px; --shadow:0 1px 2px rgba(16,40,50,.06),0 4px 14px rgba(16,40,50,.05);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#0f171b; --surface:#152128; --surface-2:#1b2a32; --ink:#e6eef2; --muted:#9fb1bb;
+      --line:#26363f; --primary:#3cc3ce; --primary-600:#2ea6b1; --primary-50:#12313550;
+      --none:#3a4a52; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.28);}
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px}
+  header.top{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px;justify-content:space-between;margin-bottom:8px}
+  h1{font-size:26px;margin:0;letter-spacing:-.01em}
+  .sub{color:var(--muted);margin:2px 0 0;font-size:14px}
+  .badge{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--primary-600);background:var(--primary-50);border:1px solid var(--line);padding:4px 9px;border-radius:999px}
+  nav.toc{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:6px;padding:12px 0;margin:14px 0 22px;background:var(--bg);border-bottom:1px solid var(--line)}
+  nav.toc a{font-size:13px;color:var(--muted);text-decoration:none;padding:6px 11px;border-radius:999px;border:1px solid transparent}
+  nav.toc a:hover{color:var(--ink);background:var(--surface-2)}
+  section{margin:30px 0}
+  h2{font-size:19px;margin:0 0 4px;display:flex;align-items:center;gap:9px}
+  h2 .n{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--primary);color:#fff;font-size:13px;font-weight:700}
+  .lead{color:var(--muted);margin:2px 0 16px;max-width:70ch}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .pad{padding:18px 20px}
+  .grid{display:grid;gap:16px}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:1fr 1fr}
+  @media(max-width:820px){.g3,.g2{grid-template-columns:1fr}}
+  .flag{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:var(--surface)}
+  .flag h4{margin:0 0 4px;font-size:15px}
+  .flag code{font-size:12.5px}
+  .flag p{margin:6px 0 0;color:var(--muted);font-size:13.5px}
+  code,kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;background:var(--surface-2);padding:1px 6px;border-radius:6px}
+  pre{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow:auto;font-size:12.5px;line-height:1.5;margin:0}
+  .lvl{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;padding:2px 8px;border-radius:999px;color:#fff;text-transform:uppercase}
+  .lvl.viewer{background:var(--viewer)} .lvl.editor{background:var(--editor)} .lvl.admin{background:var(--admin)} .lvl.none{background:var(--none);color:#33414a}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+  tr:last-child td{border-bottom:0}
+  /* flow */
+  .flow{display:flex;flex-direction:column;gap:0}
+  .step{display:flex;gap:14px;align-items:flex-start}
+  .rail{display:flex;flex-direction:column;align-items:center}
+  .dot{width:15px;height:15px;border-radius:50%;background:var(--primary);margin-top:5px;flex:0 0 auto;box-shadow:0 0 0 4px var(--primary-50)}
+  .bar{width:2px;flex:1;background:var(--line);min-height:22px}
+  .stepbody{padding:2px 0 20px}
+  .stepbody b{font-size:14.5px} .stepbody .fn{color:var(--primary-600);font-family:ui-monospace,monospace;font-size:12.5px}
+  .stepbody p{margin:5px 0 0;color:var(--muted);font-size:13.5px}
+  /* role builder */
+  .builder{display:grid;grid-template-columns:1.35fr .9fr;gap:16px}
+  @media(max-width:900px){.builder{grid-template-columns:1fr}}
+  .preset{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+  .preset button{font:inherit;font-size:12.5px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 11px;border-radius:999px}
+  .preset button:hover{border-color:var(--primary);color:var(--primary-600)}
+  .preset button.on{background:var(--primary);border-color:var(--primary);color:#fff}
+  .mgroup{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;padding:12px 4px 4px}
+  .mrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 4px;border-bottom:1px dashed var(--line)}
+  .mrow .k{font-size:13.5px}
+  .mrow .k small{color:var(--muted);font-size:11.5px;margin-left:6px}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{font:inherit;font-size:11.5px;cursor:pointer;border:0;background:var(--surface);color:var(--muted);padding:4px 9px;border-right:1px solid var(--line)}
+  .seg button:last-child{border-right:0}
+  .seg button.on{color:#fff}
+  .seg button.on[data-l="off"]{background:var(--none);color:#33414a}
+  .seg button.on[data-l="viewer"]{background:var(--viewer)}
+  .seg button.on[data-l="editor"]{background:var(--editor)}
+  .seg button.on[data-l="admin"]{background:var(--admin)}
+  .out h4{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .note{font-size:12.5px;color:var(--muted);margin-top:10px}
+  /* editor wireframe */
+  .wf{display:grid;grid-template-columns:180px 1fr;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+  @media(max-width:720px){.wf{grid-template-columns:1fr}}
+  .wf .rail2{background:var(--surface-2);border-right:1px solid var(--line);padding:10px}
+  @media(max-width:720px){.wf .rail2{border-right:0;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:6px}}
+  .wf .tab{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:8px;font-size:13.5px;color:var(--muted);cursor:default}
+  .wf .tab.on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow);font-weight:600}
+  .wf .tab .ic{width:8px;height:8px;border-radius:50%;background:var(--primary)}
+  .wf .panel{padding:18px 20px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:5px}
+  .field .inp{height:34px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);display:flex;align-items:center;padding:0 10px;color:var(--muted);font-size:13px}
+  .field.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .toggle{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:var(--surface-2)}
+  .toggle .sw{width:34px;height:20px;border-radius:999px;background:var(--primary);position:relative;flex:0 0 auto}
+  .toggle .sw::after{content:"";position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:#fff}
+  .callout{border-left:3px solid var(--admin);background:var(--surface);border:1px solid var(--line);border-left-width:3px;border-radius:10px;padding:13px 15px;margin:10px 0}
+  .callout.warn{border-left-color:var(--admin)} .callout.tip{border-left-color:var(--primary)}
+  .callout b{display:block;margin-bottom:3px}
+  footer{margin-top:44px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:16px}
+  ul.tight{margin:6px 0 0;padding-left:18px} ul.tight li{margin:4px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <span class="badge">EasyMed · Admin</span>
+      <h1>Roles &amp; Employees — reference wireframe</h1>
+      <p class="sub">How the clinic admin handles staff, roles and permissions. Verified against the live code (2026-07-10).</p>
+    </div>
+  </header>
+
+  <nav class="toc">
+    <a href="#model">Model</a>
+    <a href="#levels">Access levels</a>
+    <a href="#flow">Decision flow</a>
+    <a href="#builder">Role builder</a>
+    <a href="#special">Special roles</a>
+    <a href="#employee">Employee editor</a>
+    <a href="#db">DB &amp; trigger</a>
+    <a href="#gotchas">Gotchas</a>
+  </nav>
+
+  <!-- MODEL -->
+  <section id="model">
+    <h2><span class="n">1</span> The mental model</h2>
+    <p class="lead">A logged-in user is a <code>users</code> row. The app derives three flags from it, then decides access. Permissions come from the user's <b>role</b>; full access is a <i>state</i> (super/clinic admin), not a role.</p>
+    <div class="grid g3">
+      <div class="flag"><h4>is_super_admin</h4><code>users.is_super_admin</code><p>Platform god-mode across all clinics. Set only by the super admin.</p></div>
+      <div class="flag"><h4>is_admin</h4><code>role === 'admin'</code><p>Clinic owner/admin. No dedicated column — it's the <code>role</code> text. Bypasses the role and gets full access to their clinic.</p></div>
+      <div class="flag"><h4>is_doctor</h4><code>is_doctor · specialty · license</code><p>A <b>capability</b>: doctor lists + consultation workspace. Independent of admin — a user can be both.</p></div>
+    </div>
+  </section>
+
+  <!-- LEVELS -->
+  <section id="levels">
+    <h2><span class="n">2</span> Three access levels</h2>
+    <p class="lead">Every granted module carries a level, stored in <code>roles.permissions.levels</code>. A granted key with no explicit level defaults to <b>editor</b> (delete must be granted on purpose).</p>
+    <div class="card pad">
+      <table>
+        <tr><th>Level</th><th>Grants</th><th>Code</th></tr>
+        <tr><td><span class="lvl viewer">viewer</span></td><td>Read-only</td><td><code>canView</code></td></tr>
+        <tr><td><span class="lvl editor">editor</span></td><td>Create / edit</td><td><code>canEdit</code></td></tr>
+        <tr><td><span class="lvl admin">admin</span></td><td>Create / edit / <b>delete</b></td><td><code>canDelete</code></td></tr>
+        <tr><td><span class="lvl none">none</span></td><td>Not granted — module hidden</td><td><code>!canView</code></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- FLOW -->
+  <section id="flow">
+    <h2><span class="n">3</span> Access-decision flow</h2>
+    <p class="lead">From login to a yes/no on any button. The order matters — admins short-circuit before the role is ever read.</p>
+    <div class="card pad">
+      <div class="flow" id="flow"></div>
+    </div>
+  </section>
+
+  <!-- BUILDER -->
+  <section id="builder">
+    <h2><span class="n">4</span> Role builder (interactive)</h2>
+    <p class="lead">This mirrors the <code>#settings:roles</code> permission matrix. Pick a preset or set each module's level — the panel on the right shows exactly what gets saved to <code>roles.permissions</code>.</p>
+    <div class="card pad">
+      <div class="preset" id="preset"></div>
+      <div class="builder">
+        <div id="matrix"></div>
+        <div class="out">
+          <h4>Effective — what this role can do</h4>
+          <div class="chips" id="chips"></div>
+          <h4>Saved JSON — roles.permissions</h4>
+          <pre id="json">{}</pre>
+          <p class="note" id="hint"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SPECIAL -->
+  <section id="special">
+    <h2><span class="n">5</span> Special roles &amp; states</h2>
+    <div class="card pad">
+      <table>
+        <tr><th>Who</th><th>Determined by</th><th>Gets</th></tr>
+        <tr><td><b>Super admin</b></td><td><code>is_super_admin=true</code></td><td>God-mode, all clinics, platform-only sections</td></tr>
+        <tr><td><b>Clinic admin / owner</b></td><td><code>role='admin'</code> + company</td><td>Full access — <b>bypasses the role</b>, can never be locked out. Not assignable via the picker.</td></tr>
+        <tr><td><b>Doctor</b></td><td><code>is_doctor</code> / specialty / Doctor position</td><td>Consultation workspace, doctor lists, editable public profile; data scoped to own patients — <b>unless also admin</b></td></tr>
+        <tr><td><b>Head cashier</b></td><td>role with <b>Cashier</b> at <span class="lvl admin">admin</span></td><td>"Старший кассир" workstation: accepts handovers, company-wide payments</td></tr>
+        <tr><td><b>Regular cashier</b></td><td>role with <b>Cashier</b> at <span class="lvl editor">editor</span></td><td>Own shift / own desk</td></tr>
+      </table>
+      <div class="callout tip" style="margin-top:14px"><b>Admin + doctor together</b> Keep the admin role and set <code>is_doctor=true</code> — full admin access AND the doctor workspace. (Fixed 2026-07-10; needs <code>is_doctor</code> in the user-load query.)</div>
+    </div>
+  </section>
+
+  <!-- EMPLOYEE -->
+  <section id="employee">
+    <h2><span class="n">6</span> Employee editor</h2>
+    <p class="lead">Opened from <code>#settings:users</code>. Tabs grouped Profile / Work. Role assignment is owner-only (client + DB enforced).</p>
+    <div class="wf">
+      <div class="rail2" id="emptabs"></div>
+      <div class="panel">
+        <div class="toggle" style="margin-bottom:16px"><div class="sw"></div><div><b>This employee is a doctor</b><div style="color:var(--muted);font-size:12.5px">Adds them to the doctor list + specialties. For a non-admin with no role, pre-fills the Doctor role — never overrides an admin's role.</div></div></div>
+        <div class="field two"><div><label>Last name *</label><div class="inp">Иванов</div></div><div><label>First name *</label><div class="inp">Пётр</div></div></div>
+        <div class="field"><label>Role (owner-only · hidden for admins)</label><div class="inp">Registrator ▾</div></div>
+        <div class="field two"><div><label>Department</label><div class="inp">Reception ▾</div></div><div><label>Primary branch</label><div class="inp">Main ▾</div></div></div>
+        <p class="note">Saves to <code>users</code> (+ <code>user_branches</code>, <code>user_specialties</code>, <code>doctor_consultation_prices</code>). Assigning a role fires the DB trigger that syncs <code>users.role</code> text.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- DB -->
+  <section id="db">
+    <h2><span class="n">7</span> Database — the role-sync trigger</h2>
+    <p class="lead">The one behaviour that surprises everyone: assigning a <code>role_id</code> rewrites the <code>users.role</code> text to that role's name.</p>
+    <div class="grid g2">
+      <div class="card pad">
+        <h4 style="margin:0 0 8px">trg_sync_users_role_text (migration 044)</h4>
+        <pre>before insert or update of role_id on users:
+  new.role := lower(roles.name of new.role_id)</pre>
+        <div class="callout warn"><b>Consequence</b> Assign the "Doctor" role → <code>users.role='doctor'</code> → <code>is_admin</code> turns off. To keep someone admin, don't reassign their role; use the <code>is_doctor</code> flag for doctor capability.</div>
+      </div>
+      <div class="card pad">
+        <h4 style="margin:0 0 8px">RLS helpers (migrations 033 / 041)</h4>
+        <pre>current_user_is_admin()    -- role='admin'
+current_user_company_id()
+current_user_branches()
+current_user_is_doctor()
+current_user_id()</pre>
+        <p class="note">Writing <code>users.role_id</code> requires <code>current_user_is_admin()</code> — only the owner assigns roles (mirrored client-side).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- GOTCHAS -->
+  <section id="gotchas">
+    <h2><span class="n">8</span> Gotchas</h2>
+    <div class="card pad">
+      <ul class="tight">
+        <li><b>Role-text sync trigger</b> overwrites <code>users.role</code> from <code>role_id</code> — flipping the Doctor role turns off admin.</li>
+        <li><b><code>is_admin</code> has no column</b> — it's <code>role='admin'</code>. The clinic-admin bypass keeps owners from being locked out.</li>
+        <li><b><code>is_doctor</code> must be in the user-load SELECT</b>, or the app can't tell an admin is also a doctor.</li>
+        <li><b>Admin + doctor</b> is supported (was hardcoded XOR before).</li>
+        <li><b>Unlisted key = editor</b>, not admin — delete rights are explicit.</li>
+        <li><b><code>scopedDoctorId</code> (data scope) ≠ <code>selfDoctorId</code> (self identity)</b> — admins are null for scope but still their own doctor.</li>
+        <li><b>Head cashier = Cashier@Admin</b>, not a named role.</li>
+        <li><b><code>permissions.js</code>/<code>auth.js</code> are version-less imports</b> → after edits, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> hard refresh.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    Files: <code>js/admin.js</code> · <code>js/admin/auth.js</code> · <code>js/admin/permissions.js</code> · <code>js/admin/views/employee-editor.js</code> · <code>js/admin/views/section-crud.js</code> · <code>js/admin/sections.js</code> · DB migrations 033/041/044/045.
+    <br>Companion doc: <code>roles-employees-handout.md</code>. Generated 2026-07-10 from the live EasyMed admin.
+  </footer>
+</div>
+
+<script>
+/* ---- decision flow ---- */
+const FLOW=[
+  ["rehydrateUserFromSession()","auth.js","Loads the users row. Must SELECT is_doctor."],
+  ["actorFromUser(row)","auth.js","Derives is_super_admin, is_admin (role==='admin'), is_doctor (role/is_doctor/specialty/license)."],
+  ["applyActorPermissions(actor)","admin.js","1) super admin → full · 2) is_admin+company → full (wins over role) · 3) role_id → its sections (empty → __no_access__) · 4) no role → full."],
+  ["_effective : Set | null","permissions.js","null = full access. Otherwise the set of granted keys + their levels."],
+  ["accessLevelFor(key) → canView / canEdit / canDelete","permissions.js","The yes/no on every button and nav item."]
+];
+document.getElementById('flow').innerHTML=FLOW.map((s,i)=>`
+  <div class="step">
+    <div class="rail"><div class="dot"></div>${i<FLOW.length-1?'<div class="bar"></div>':''}</div>
+    <div class="stepbody"><b>${s[0]}</b> <span class="fn">${s[1]}</span><p>${s[2]}</p></div>
+  </div>`).join('');
+
+/* ---- employee tabs ---- */
+const TABS=["Identity","Job","License","Branches","Employment & salary","Working hours","Services","Consultations","Referral"];
+document.getElementById('emptabs').innerHTML=TABS.map((t,i)=>`<div class="tab ${i===1?'on':''}"><span class="ic"></span>${t}</div>`).join('');
+
+/* ---- role builder ---- */
+const MODULES=[
+  ["Clinical",[["patients","Patients"],["appointments","Scheduling"],["consultation","My services (doctor)"],["labs","Laboratory"],["beds","Ward & beds"],["requests","Заявки"]]],
+  ["Operations",[["cashier","Cashier"],["pharmacy","Pharmacy"],["procurement","Procurement"]]],
+  ["Insights",[["dashboard","Dashboard"],["reports","Reports"],["settings","Settings (+ all settings:*)"]]]
+];
+const LEVELS=["off","viewer","editor","admin"];
+const PRESETS={
+  "Registrator":{patients:"editor",appointments:"editor",requests:"editor"},
+  "Cashier":{cashier:"editor",patients:"viewer",reports:"viewer",dashboard:"viewer"},
+  "Head cashier":{cashier:"admin",patients:"viewer",reports:"editor",dashboard:"viewer"},
+  "Doctor":{patients:"editor",appointments:"viewer",consultation:"admin",labs:"editor"},
+  "Nurse":{patients:"editor",beds:"editor",labs:"editor",appointments:"viewer"},
+  "Clear":{}
+};
+let state={};
+function setPreset(name){ state=Object.assign({},PRESETS[name]||{}); [...document.querySelectorAll('#preset button')].forEach(b=>b.classList.toggle('on',b.dataset.p===name)); render(); }
+function render(){
+  // matrix
+  const m=MODULES.map(([g,items])=>`<div class="mgroup">${g}</div>`+items.map(([k,l])=>{
+    const cur=state[k]||"off";
+    return `<div class="mrow"><div class="k">${l}<small>${k}</small></div>
+      <div class="seg" data-k="${k}">${LEVELS.map(L=>`<button data-l="${L}" class="${cur===L?'on':''}">${L}</button>`).join('')}</div></div>`;
+  }).join('')).join('');
+  document.getElementById('matrix').innerHTML=m;
+  document.querySelectorAll('.seg').forEach(seg=>{
+    seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+      const k=seg.dataset.k,L=b.dataset.l; if(L==="off")delete state[k];else state[k]=L;
+      [...document.querySelectorAll('#preset button')].forEach(x=>x.classList.remove('on')); render();
+    });
+  });
+  // output
+  const sections=Object.keys(state), levels={};sections.forEach(k=>levels[k]=state[k]);
+  const chips=sections.length?sections.map(k=>`<span class="lvl ${state[k]}">${k} · ${state[k]}</span>`).join(''):'<span class="note">No modules granted — this role lands on the access-denied screen (fail-closed).</span>';
+  document.getElementById('chips').innerHTML=chips;
+  document.getElementById('json').textContent=JSON.stringify({sections,levels},null,2);
+  const head=sections.includes('cashier')&&state.cashier==='admin';
+  document.getElementById('hint').textContent=head?'Cashier at admin → this is a HEAD CASHIER role.':(sections.length?'':'Tip: empty sections = fail-closed (no access), by design.');
+}
+document.getElementById('preset').innerHTML=Object.keys(PRESETS).map(p=>`<button data-p="${p}">${p}</button>`).join('');
+document.querySelectorAll('#preset button').forEach(b=>b.onclick=()=>setPreset(b.dataset.p));
+setPreset("Registrator");
+</script>
+</body>
+</html>
