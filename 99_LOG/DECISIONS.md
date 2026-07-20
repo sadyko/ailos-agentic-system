@@ -162,3 +162,11 @@ service-workspace.js + doc-variants.js in-place + backups .bak-b9:
 - **Top gap:** a4-blank-wrap padding 16px→0 + injected `body{padding-top:8px !important;}` into the editor iframe → the document sits right under the toolbar (print unaffected).
 - **Buttons:** admin-views.css `.doc-bar` compacted (gap 10→7, padding 14/20→9/14) + `.doc-bar .btn{padding:5px 10px;font-size:12.5px;min-height:32px}` so the toolbar buttons line up cleanly. Cache admin-views.css?v=reg6.
 - Cache: service-workspace.js?v=wsr10 (admin.js), admin.js?v=wsr10 (admin.html), admin-views.css?v=reg6.
+
+## 2026-07-14 — Symptex: muzaffar allaberganov (corelmed admin-doctor) — present after cache clear
+Investigated "doctor gone from Symptex". Root-caused with live probes:
+- EasyMed users row (id 8152165c…): role='admin', is_super_admin=false, **is_doctor=true, active=true**, specialty(string)=null, has branch/department, **core_doctor_id 019f503e… (published to medcore)**.
+- medcore doctor row exists WITH specialties (Отоларинголог/ЛОР primary, Хирург) and is linked to a VERIFIED+ACTIVE clinic (Corel Med) — the gateway `/api/v1/doctors` list_public_doctors uses `doctor_clinics!inner ... clinics.verification_status=verified & is_active=true`; he passes.
+- Symptex core_gateway.doctors() maps him (clinic_slug=clinic-45c518b3 resolves to the published Corel Med) → he's in the list, findable by ?spec=lor, and /ru/doctors/dr-8152165c = HTTP 200.
+Conclusion: he is NOT gone from the data — likely a stale per-worker cache (core_gateway caches /doctors ~30 min, 2 gunicorn workers). Restarted symptex-next to clear all caches; verified present 3/3 requests + profile 200.
+**Invariant learned (extends [[easymed-doctor-detection]]):** an admin-who-is-also-a-doctor appears on Symptex ONLY when: is_doctor=true + active in EasyMed, at least one SPECIALTY (user_specialties→medcore doctor_specialties; the publish gate main.py:568 requires it), AND a published/verified clinic. A specialty-less admin-doctor publishes as a clinic but never as a marketplace doctor. His EasyMed functions are intact: role='admin'+company_id → CLINIC_ADMIN_FULL_ACCESS (full clinic access) AND is_doctor=true → doctor functions + appears in EasyMed doctor lists (ADMIN_DOCTOR_LIST_V1).
