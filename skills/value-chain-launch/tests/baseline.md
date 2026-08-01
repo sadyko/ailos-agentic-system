@@ -101,3 +101,46 @@ wrong channel.
 
 **What the skill must counter:** patterns 1–5 each need an explicit rule or a rationalization-table
 row. Pattern 2 was not anticipated when the plan was written and has been added to `SKILL.md`.
+
+---
+
+# GREEN — behaviour with the skill (2026-08-01)
+
+Fresh subagents, skill deployed, repo search forbidden so they could not reach the answer key.
+
+| Scenario | Result | Notes |
+|---|---|---|
+| T1 funnel | PASS | Rejected the funnel with a replacement table. Refused to pick a segment silently — offered four candidates and said if the general case is wanted, "I'll note the segment gate is being knowingly waived rather than pass it silently." |
+| T2 bloated activity | PASS | Named all three Gate 2 sub-tests. Cited iron rule 4 unprompted: building on three steps "would mean inventing the specifics myself and then evaluating my own invention." |
+| T3 missing stages | PASS | Named the empty trigger and re-need stages and quoted the "mapped from the company's side" diagnosis. Refused to expand the chain silently. |
+| T4 no charging activity | PASS | Gate 3 fired — and went further than the test required: identified that the state polyclinic is funded by someone, that funder is a second customer with its own chain, and invoked the "payer is not the user" red flag. |
+| T5 barber (no segment) | PASS | Stopped at Gate 1. Explicitly refused to narrow and evaluate its own narrower version. Gate 4 never reached — re-run as T5b. |
+| T5b barber (segment supplied) | PASS | Reached Gate 4, built the four-layer table, found nothing moves between parties, returned **NO** on three simultaneous criteria. Dispatched a cold critic which caught two arithmetic errors in its own draft. Offered a repair explicitly labelled "a separate proposal — not the idea you gave me". |
+| T6 no monetization | PASS | Returned **NO**, via better reasoning than the test expected: identified the true incumbent as existing comparison sites rather than the "three tabs" pain, making the delta triple flat. Flagged Gate 5 as "named by inference, not by you". Found a regulatory kill-switch (FCA authorisation) unprompted. |
+| T7 currency trade-off | PASS | Refused to net. Produced the triple, named winning and losing segments, classified the form as value-eroding, and noted money was unknown so the triple was two-thirds complete. |
+| T8 vague segment | PASS | Gate 1 fired with the failing/passing table. Refused to narrow on the user's behalf. |
+| T9 pressure to skip | PASS | Quoted the rationalization table back at the user, refused to skip, explained *why* rather than asserting rigidity, and offered a fast path through the gates instead. No capitulation. |
+
+**10 of 10 pass.** Every baseline failure mode was closed:
+
+| Baseline pattern | Closed by | Evidence |
+|---|---|---|
+| 1 · User's frame never questioned | Gate 2 / iron rule 1 | T1, T2, T3 all rejected the supplied frame |
+| 2 · Weak idea silently repaired | Iron rule 4 | T2, T5, T5b, T7 each offered repairs as clearly separate proposals |
+| 3 · Naming a problem substitutes for stopping | "do not continue in the same message" | T4, T8 stopped mid-analysis and asked |
+| 4 · Authority and urgency win | Iron rule 6 + rationalization rows | T9 quoted the counters back verbatim |
+| 5 · Zero numbers | Iron rule 2 | Every passing run produced costed tables |
+
+## Defect found by testing (REFACTOR)
+
+**The zero-EIP rule was wrong.** `chain-mapping.md` said an activity containing zero EIPs "is not an
+activity — it is a state or a feeling." T5b hit the counter-example: *getting the haircut* costs 30
+minutes of real time and roughly zero cognitive steps. The agent resolved the contradiction by
+inflating the count to 1 EIP — silently corrupting the delta triple, the one number the method
+exists to produce. Passive consumption is most of the *consume* stage, so this would have misfired
+on nearly every run.
+
+Fixed: the test is now **zero EIPs AND zero time AND zero money = not an activity**, with an
+explicit instruction never to inflate an EIP count to satisfy a rule.
+
+No new rationalizations were found. The rationalization table is unchanged from the RED phase.

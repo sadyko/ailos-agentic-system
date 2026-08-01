@@ -42,7 +42,19 @@ Three mechanical tests. All three must pass.
 **(a) Coverage** — ≥12 activities total, ≥1 in every one of the six stages.
 
 **(b) Granularity** — every activity contains between 1 and about 5 EIPs. More than 5 means it is
-too coarse: split it. Zero means it is not an activity — it is a state or a feeling.
+too coarse: split it.
+
+Zero EIPs is *usually* a sign it is not an activity but a state or a feeling ("wants a new car",
+"feels frustrated") — delete those. But **passive consumption is a real activity with near-zero
+effort**: sitting in the chair while your hair is cut, waiting for a delivery, sitting through the
+appointment. These cost real time or real money while demanding almost no cognitive steps, and the
+whole *consume* stage is often made of them.
+
+So the actual test is: **zero EIPs AND zero time AND zero money = not an activity.** If any one of
+the three currencies is non-zero, keep it and write `0` in the EIP column honestly.
+
+Never inflate an EIP count to satisfy a rule. A fabricated `1` in the effort column corrupts the
+delta triple, which is the one number the whole method exists to produce.
 
 **(c) No funnel labels** — these are rejected outright:
 
