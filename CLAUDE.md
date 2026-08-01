@@ -48,4 +48,5 @@ Put screenshot/design references in `40_DESIGN/refs/` and point the component's 
 - `target/` — code built by the machine · `target/ui/` — the React component library
 - `99_LOG/DECISIONS.md` — append-only audit trail
 - `docs/superpowers/` — specs + plans
+- `skills/` — Claude Code skills authored here (source of truth), deployed by copy to `~/.claude/skills/`; each carries its own `DEPLOY.md` and `tests/`
 - Known limitations / next steps: `30_BUILD/issues.md`
