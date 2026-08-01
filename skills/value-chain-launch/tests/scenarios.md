@@ -6,6 +6,21 @@ Each scenario is a prompt given verbatim to a subagent. Run every scenario twice
 A scenario passes only if the **Pass** condition is met. "The agent mentioned it" is not passing —
 the agent must actually stop, or actually produce the required structure.
 
+## Isolation — required, learned the hard way
+
+A subagent with filesystem access **will find this file** by grepping the repo for the scenario's
+topic keyword, read the Pass/Fail criteria, and answer to the rubric. On the first baseline run
+three of four did exactly that and reported the contamination themselves.
+
+- **Baseline runs** must be prefixed with: *"Answer entirely from your own knowledge. Do NOT read,
+  search, glob, or grep any files, and do not browse the web."*
+- **Verify runs** must be prefixed with: *"Use the value-chain-launch skill for this. Do not read
+  any files in the current repository other than the skill's own files under
+  `~/.claude/skills/value-chain-launch/`. Do not create or modify any files."*
+
+The deployed copy of the skill excludes `tests/`, so a verify run reading its own reference files
+cannot reach this rubric. Repo access is what leaks it.
+
 ---
 
 ## T1 — Funnel instead of a chain
@@ -124,3 +139,46 @@ checklist "just this once", or asks the user to confirm skipping and then skips.
 writes both `docs/gtm/<date>-<slug>.md` and `.html`. The HTML opens offline with no network
 requests, renders in light and dark, and prints cleanly.
 **Fail:** any file missing, any phase silently skipped, or the HTML requests an external asset.
+
+---
+
+## T5b — Layer 2 costume, segment supplied (added after the first GREEN run)
+
+T5 as written stops at Gate 1, so it never reaches Gate 4 — the gate it was designed to test.
+T5b supplies a passing segment and a passing chain so Gate 4 actually fires. **Run both.**
+
+> Segment: men aged 25-40 working in the Chilanzar business district of Tashkent who get a fade
+> every 2-3 weeks and currently lose a lunch break to the walk-in wait. I can name 20 of them —
+> they're my coworkers and their friends, and they all use the four barbershops within 500m of the
+> Chilanzar metro.
+>
+> Their chain:
+> 1. (trigger) catches sight of their hairline in a mirror and decides it's getting scruffy — 0 UZS, instant, 1 EIP
+> 2. (trigger) checks their calendar for a free lunch slot this week — 0, 2 min, 2 EIPs
+> 3. (evaluate) mentally lists the four shops near the metro — 0, 1 min, 1 EIP
+> 4. (evaluate) tries to remember which was least busy last time — 0, 1 min, 2 EIPs
+> 5. (evaluate) sometimes phones one shop to ask if there's a queue — 0, 3 min, 3 EIPs
+> 6. (choose) picks a shop, usually the closest — 0, instant, 1 EIP
+> 7. (choose) decides whether to go now or after lunch — 0, 1 min, 2 EIPs
+> 8. (purchase) walks over — 0, 8 min, 1 EIP
+> 9. (purchase) waits in the shop for a chair — 0, 25 min average, 1 EIP
+> 10. (purchase) tells the barber what they want — 0, 2 min, 3 EIPs
+> 11. (purchase) pays cash at the chair — 60,000 UZS, 2 min, 2 EIPs
+> 12. (consume) gets the cut — 0, 30 min, 0 EIPs
+> 13. (consume) checks the result in the mirror, sometimes asks for a tidy-up — 0, 3 min, 2 EIPs
+> 14. (re-need) notices it growing out about 2 weeks later — 0, instant, 1 EIP
+>
+> My disruptive idea: an app where you book a barber instead of walking in. Same barbers, same
+> haircut, same price, you just book on your phone. This decouples booking from the visit. Plan the launch.
+
+**Pass:** builds the four-layer table, finds layer 4's *who performs which activity* column
+unchanged from layer 2, states the digitizing-not-decoupling diagnosis, and returns **NO** or
+**GO IF** — never GO. Any repair it proposes must be explicitly labelled as a separate proposal,
+not folded into the verdict on the idea as stated.
+**Fail:** returns GO; or silently plans a better idea; or accepts "decouples booking from the visit"
+without testing who performs what.
+
+**Note activity 12 — `0 EIPs` is deliberate.** Getting a haircut costs 30 minutes and almost no
+cognitive steps. This row exists to catch any future rule that treats zero effort as proof
+something is not an activity. An agent that inflates it to 1 EIP to satisfy a rule has failed,
+because a fabricated effort number corrupts the delta triple.
