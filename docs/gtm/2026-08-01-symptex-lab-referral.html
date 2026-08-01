@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Symptex — Lab-Referral Wedge</title>
+<style>
+  :root {
+    --bg: #fbfbfa; --fg: #1c1c1a; --muted: #6b6b66; --line: #e2e2dd; --card: #fff;
+    --go: #1a7f4b; --goif: #a8700a; --no: #a52222;
+    --creates: #d9ecdd; --erodes: #f6e0dd; --charge: #1c1c1a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17171a; --fg: #e9e9e6; --muted: #9a9a94; --line: #2f2f34; --card: #1e1e22;
+      --go: #5cc98a; --goif: #d9a441; --no: #e07070;
+      --creates: #1f3a2a; --erodes: #3a2020; --charge: #e9e9e6;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17171a; --fg: #e9e9e6; --muted: #9a9a94; --line: #2f2f34; --card: #1e1e22;
+    --go: #5cc98a; --goif: #d9a441; --no: #e07070;
+    --creates: #1f3a2a; --erodes: #3a2020; --charge: #e9e9e6;
+  }
+  :root[data-theme="light"] {
+    --bg: #fbfbfa; --fg: #1c1c1a; --muted: #6b6b66; --line: #e2e2dd; --card: #fff;
+    --go: #1a7f4b; --goif: #a8700a; --no: #a52222;
+    --creates: #d9ecdd; --erodes: #f6e0dd; --charge: #1c1c1a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 2.5rem 1.25rem 5rem; background: var(--bg); color: var(--fg);
+    font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  main { max-width: 62rem; margin: 0 auto; }
+  h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 .25rem; letter-spacing: -.02em; }
+  h2 { font-size: 1.15rem; margin: 2.75rem 0 .85rem; letter-spacing: -.01em; }
+  h3 { font-size: .95rem; margin: 1.5rem 0 .3rem; }
+  .sub { color: var(--muted); font-size: .875rem; margin: 0 0 2rem; }
+  .verdict { border: 2px solid currentColor; border-radius: .6rem; padding: 1rem 1.25rem; margin: 0 0 2rem; }
+  .verdict.go { color: var(--go); } .verdict.goif { color: var(--goif); } .verdict.no { color: var(--no); }
+  .verdict h2 { margin: 0 0 .4rem; font-size: 1.3rem; text-transform: uppercase; letter-spacing: .06em; }
+  .verdict p { margin: 0 0 .5rem; color: var(--fg); }
+  .verdict ol { margin: .5rem 0 0; padding-left: 1.2rem; color: var(--fg); }
+  .verdict li { margin-bottom: .3rem; }
+  .warn { border-left: 3px solid var(--no); background: var(--card); padding: .7rem 1rem; margin: 0 0 1.5rem; font-size: .9rem; }
+  .triple { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1rem 0; }
+  .triple div { flex: 1 1 9rem; background: var(--card); border: 1px solid var(--line); border-radius: .5rem; padding: .9rem 1rem; }
+  .triple span { display: block; color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .07em; }
+  .triple strong { font-size: 1.5rem; font-weight: 650; letter-spacing: -.02em; }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .chain { display: flex; gap: .5rem; padding-bottom: .5rem; min-width: min-content; }
+  .stage { flex: 0 0 auto; }
+  .stage > span { display: block; color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; margin-bottom: .35rem; }
+  .acts { display: flex; gap: .35rem; }
+  .act { flex: 0 0 8.5rem; border: 1px solid var(--line); border-radius: .45rem; padding: .55rem .6rem; font-size: .78rem; line-height: 1.35; background: var(--card); }
+  .act.creates { background: var(--creates); }
+  .act.erodes  { background: var(--erodes); }
+  .act.charges { border-color: var(--charge); border-width: 2px; }
+  .act b { display: block; font-weight: 600; margin-bottom: .2rem; }
+  .act em { font-style: normal; color: var(--muted); font-size: .72rem; }
+  .quad { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin: 1rem 0; }
+  .quad > div { border: 1px solid var(--line); border-radius: .5rem; padding: .85rem; background: var(--card); min-height: 6.5rem; }
+  .quad h3 { margin: 0 0 .4rem; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .quad ul { margin: 0; padding-left: 1.05rem; font-size: .82rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .875rem; }
+  th, td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: .74rem; text-transform: uppercase; letter-spacing: .06em; }
+  ul.check { list-style: none; padding: 0; margin: .5rem 0 0; }
+  ul.check li { display: flex; gap: .6rem; align-items: flex-start; padding: .45rem 0; border-bottom: 1px solid var(--line); }
+  ul.check input { margin-top: .35rem; flex: 0 0 auto; }
+  ul.check em { font-style: normal; color: var(--muted); display: block; font-size: .8rem; }
+  .prop { border: 1px dashed var(--line); border-radius: .6rem; padding: 1rem 1.25rem; margin-top: 1rem; background: var(--card); }
+  @media (max-width: 34rem) { .quad { grid-template-columns: 1fr; } }
+  @media print {
+    body { background: #fff; color: #000; padding: 0; font-size: 11pt; }
+    .verdict { border-color: #000; color: #000; }
+    .act, .quad > div, .triple div, .prop { background: #fff; border-color: #999; }
+    h2 { break-after: avoid; } table, .quad, .triple { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <h1>Symptex &mdash; Lab-Referral Wedge</h1>
+  <p class="sub">Launch plan &middot; 1 August 2026 &middot; segment: a person in Tashkent holding a printed slip listing 4&ndash;6 analyses</p>
+
+  <div class="warn"><strong>Scope.</strong> This tests the lab-referral segment only &mdash; not Symptex as a whole. The doctor-visit booking business is out of scope and nothing here is a verdict on it.</div>
+
+  <div class="verdict no">
+    <h2>NO</h2>
+    <p>The wedge as stated &mdash; decouple find &rarr; compare &rarr; book for a lab referral &mdash; fails on three grounds, any one sufficient:</p>
+    <ol>
+      <li><strong>The money row has no foundation.</strong> The two verified prices are different products: Gemotest <em>&Omicron;АК without leukocyte formula</em> (29,000) vs lab-net <em>&Omicron;АК 25 parameters</em> (75,000).</li>
+      <li><strong>The wedge relocates work rather than removing it.</strong> Activities 6&ndash;8 do not disappear; Symptex performs them, manually, with no fee and no contribution margin anywhere in the model.</li>
+      <li><strong>Who pays contradicts what the wedge does.</strong> The clinic pays &mdash; and is asked to fund the loss of its own captive-lab revenue.</li>
+    </ol>
+  </div>
+
+  <h2>The delta &mdash; versus a patient who currently compares by hand</h2>
+  <div class="triple">
+    <div><span>Money</span><strong>?</strong></div>
+    <div><span>Time</span><strong>&minus;35 min</strong></div>
+    <div><span>Effort</span><strong>&minus;24 EIPs</strong></div>
+  </div>
+  <p class="sub">Two currencies improve for one behaviour and worsen for the other (default-takers: +3 min, +3 EIPs), and the currency that would decide between them is unknown. That is not a win. The 35 minutes is also only ~20% of active time in the chain and almost none of the elapsed pain &mdash; 25 min travel, 20 min queue, 1&ndash;3 days waiting and a 40-minute return consult all remain.</p>
+
+  <h2>The customer value chain</h2>
+  <div class="scroll">
+    <div class="chain">
+      <div class="stage">
+        <span>Trigger</span>
+        <div class="acts">
+          <div class="act creates"><b>doctor hands over the slip</b><em>0 &middot; 1m &middot; 1 EIP</em></div>
+          <div class="act erodes"><b>cannot read the abbreviations</b><em>0 &middot; 2m &middot; 3 EIPs</em></div>
+        </div>
+      </div>
+      <div class="stage">
+        <span>Evaluate</span>
+        <div class="acts">
+          <div class="act creates"><b>asks reception where to go</b><em>0 &middot; 2m &middot; 2 EIPs</em></div>
+          <div class="act erodes"><b>sends photo to a relative</b><em>0 &middot; 3m &middot; 3 EIPs</em></div>
+          <div class="act creates"><b>searches one test name</b><em>0 &middot; 3m &middot; 3 EIPs</em></div>
+          <div class="act erodes"><b>opens 2&ndash;3 lab sites</b><em>0 &middot; 5m &middot; 4 EIPs</em></div>
+          <div class="act erodes"><b>matches slip names to catalogues</b><em>0 &middot; 10m &middot; 5 EIPs</em></div>
+          <div class="act erodes"><b>sums the basket per lab</b><em>0 &middot; 8m &middot; 5 EIPs</em></div>
+          <div class="act creates"><b>checks fasting rules</b><em>0 &middot; 5m &middot; 4 EIPs</em></div>
+          <div class="act erodes"><b>checks locations and hours</b><em>0 &middot; 5m &middot; 4 EIPs</em></div>
+        </div>
+      </div>
+      <div class="stage">
+        <span>Choose</span>
+        <div class="acts">
+          <div class="act creates"><b>picks a lab &mdash; usually the clinic's</b><em>0 &middot; 2m &middot; 2 EIPs</em></div>
+          <div class="act erodes"><b>picks a morning (fasting)</b><em>0 &middot; 2m &middot; 2 EIPs</em></div>
+        </div>
+      </div>
+      <div class="stage">
+        <span>Purchase</span>
+        <div class="acts">
+          <div class="act erodes"><b>travels to the lab</b><em>~10,000 &middot; 25m &middot; 1 EIP</em></div>
+          <div class="act erodes"><b>queues at reception</b><em>0 &middot; 20m &middot; 0 EIPs</em></div>
+          <div class="act erodes"><b>receptionist re-keys the tests</b><em>0 &middot; 5m &middot; 3 EIPs</em></div>
+          <div class="act erodes charges"><b>pays at the counter</b><em>29&ndash;75,000 &middot; 3m &middot; 2 EIPs</em></div>
+          <div class="act erodes charges"><b>gives blood</b><em>11,000 &middot; 5m &middot; 0 EIPs</em></div>
+        </div>
+      </div>
+      <div class="stage">
+        <span>Consume</span>
+        <div class="acts">
+          <div class="act erodes"><b>waits for results</b><em>0 &middot; 1&ndash;3 days &middot; 0 EIPs</em></div>
+          <div class="act creates"><b>collects results</b><em>0 &middot; 2&ndash;20m &middot; 2 EIPs</em></div>
+          <div class="act erodes"><b>cannot read the reference ranges</b><em>0 &middot; 10m &middot; 5 EIPs</em></div>
+          <div class="act creates charges"><b>doctor interprets them</b><em>fee ? &middot; 40m+ &middot; 2 EIPs</em></div>
+          <div class="act creates charges"><b>learns what is wrong and what to do</b><em>0 &middot; 10m &middot; 3 EIPs</em></div>
+        </div>
+      </div>
+      <div class="stage">
+        <span>Re-need</span>
+        <div class="acts">
+          <div class="act creates"><b>control repeat ordered</b><em>0 &middot; 1m &middot; 1 EIP</em></div>
+          <div class="act erodes"><b>same panel again next year</b><em>0 &middot; &mdash; &middot; 1 EIP</em></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="sub">Green creates value &middot; red erodes it &middot; thick border means somebody charges there. Costs counted precisely across the candidate wedge only; estimated elsewhere.</p>
+
+  <h2>Where the money and the value sit</h2>
+  <div class="quad">
+    <div><h3>Creates value &middot; charged for</h3><ul>
+      <li>doctor interprets the results</li>
+      <li><strong>learns what is wrong and what to do</strong></li>
+    </ul><p class="sub" style="margin:.5rem 0 0">The fortress &mdash; and the only paid value in the chain.</p></div>
+    <div><h3>Creates value &middot; not charged</h3><ul>
+      <li>asks reception where to go</li>
+      <li>searches one test name</li>
+      <li>checks fasting rules</li>
+      <li>picks a lab</li>
+      <li>collects results</li>
+    </ul></div>
+    <div><h3>Erodes value &middot; charged for</h3><ul>
+      <li>pays at the counter</li>
+      <li>gives blood</li>
+    </ul></div>
+    <div><h3>Erodes value &middot; not charged</h3><ul>
+      <li>matching slip names to catalogues</li>
+      <li>summing the basket per lab</li>
+      <li>travel, queue, re-keying, waiting</li>
+      <li>cannot read the reference ranges</li>
+    </ul><p class="sub" style="margin:.5rem 0 0">Where the stated wedge mostly sits &mdash; the lowest-valued, most copyable cell.</p></div>
+  </div>
+
+  <h2>What was verified, and what was not</h2>
+  <table>
+    <thead><tr><th>Source</th><th>Finding</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>clinics.uz</td><td>407 clinics listed for blood tests &mdash; every price reads &laquo;цена по звонку&raquo;, no booking, phone only</td><td>Verified by fetch</td></tr>
+      <tr><td>gemotest.uz</td><td>29,000 UZS + 11,000 collection &middot; 1-day turnaround &middot; cart &middot; home collection</td><td>Verified by fetch</td></tr>
+      <tr><td>lab-net.uz</td><td>75,000 UZS &middot; cart &middot; home call</td><td>Verified by fetch</td></tr>
+      <tr><td>Price range 23,000&ndash;175,000 UZS</td><td>Search summaries only &mdash; covers different tests, unusable for any saving calculation</td><td><strong>Unverified</strong></td></tr>
+      <tr><td>med24.uz</td><td>Claims 230 clinics, 200+ labs, prices, reviews, online booking. If real, occupies this exact wedge</td><td><strong>Unverified &mdash; HTTP 503 twice</strong></td></tr>
+    </tbody>
+  </table>
+
+  <h2>The incumbent</h2>
+  <table>
+    <tr><th>Who they actually are</th><td>Not offline clinics. The existing directories &mdash; med24.uz and clinics.uz &mdash; which already own the listings and the traffic.</td></tr>
+    <tr><th>Structural protection</th><td>Lab chains cannot credibly compare themselves against competitors. That protection is real.</td></tr>
+    <tr><th>Likely response</th><td>The directories add real prices and booking on top of what they already have. Fast, and cheap for them.</td></tr>
+    <tr><th>Fastest failure</th><td><strong>Six weeks.</strong> The channel is EasyMed's printed slip &mdash; the clinic's printer, workflow and paid software. The first head doctor who notices referrals leaving for outside labs demands the QR is removed, and wins, because they are EasyMed's paying customer. Channel and revenue are the same relationship.</td></tr>
+  </table>
+
+  <h2>Checklist &mdash; a test list, not a spend list</h2>
+  <h3>Kill-or-continue &mdash; any one of these can end it in a week</h3>
+  <ul class="check">
+    <li><input type="checkbox"><span>Open med24.uz from inside Uzbekistan, on a phone<em>founder &middot; done when screenshots exist &middot; proves whether the wedge is already occupied</em></span></li>
+    <li><input type="checkbox"><span>Price one <strong>identical</strong> test at five labs on the same day<em>founder &middot; done when five figures sit in a table &middot; proves whether a real spread exists</em></span></li>
+    <li><input type="checkbox"><span>Ask one lab commercial director whether they will publish a price feed<em>founder &middot; done when one clear answer &middot; proves the assumption that kills the product outright</em></span></li>
+    <li><input type="checkbox"><span>Establish whether Tashkent labs take appointments at all, or are walk-in<em>founder &middot; done when three labs asked &middot; proves whether a per-booking fee has an event to attach to</em></span></li>
+  </ul>
+  <h3>Only if all four pass</h3>
+  <ul class="check">
+    <li><input type="checkbox"><span>Measure the searcher/default-taker split &mdash; of 30 people leaving with a slip, how many compare?<em>founder &middot; done when 30 asked &middot; proves the size of the addressable behaviour</em></span></li>
+    <li><input type="checkbox"><span>Get clinic in-house lab margin and its share of clinic revenue<em>founder &middot; done when two owners answer honestly &middot; proves the size of the counter-incentive</em></span></li>
+    <li><input type="checkbox"><span>Ask five EasyMed clinic owners: would you accept a QR that sends patients to another lab?<em>founder &middot; done when five answers &middot; proves whether the channel survives contact with the payer</em></span></li>
+    <li><input type="checkbox"><span>Produce unit economics: fee, cost to price a basket manually, contribution margin<em>founder &middot; done when three numbers exist &middot; proves the relocated work can be funded</em></span></li>
+    <li><input type="checkbox"><span>Check the regulatory position for handling medical orders, identity and results<em>founder &middot; done when a lawyer has answered &middot; proves this is legal as designed</em></span></li>
+  </ul>
+
+  <h2>Separate proposal &mdash; not part of the verdict</h2>
+  <div class="prop">
+    <p>Offered because the analysis surfaced it, not to rescue the idea. <strong>It has not been run through the gates and no verdict attaches to it.</strong></p>
+    <p>The chain's own ranking puts <strong>&laquo;cannot read the reference ranges&raquo; &rarr; &laquo;doctor interprets them&raquo;</strong> above the link the deck targets. It is 5 EIPs &mdash; joint highest effort in the chain &mdash; weakly bonded, and sits immediately adjacent to the only two activities anyone pays for. Interpreting a result is unambiguously value-creating, the cell the book's data values around six times higher than value-eroding work. Symptex already owns the asset: 423 published analysis articles explaining what tests mean.</p>
+    <p>That is the difference between &laquo;we save you a trip round three price lists&raquo; and &laquo;we tell you what your result means&raquo;. The chain as mapped describes an errand; the patient's job is finding out what is wrong with them.</p>
+    <p>It also inverts the channel conflict. Explaining a result drives the patient <em>back</em> to the referring doctor rather than away from the clinic's lab &mdash; so instead of asking a clinic to fund its own revenue loss, it sends them a return consultation. The payer's incentive and the patient's interest point the same way, which is the thing the current model cannot say.</p>
+    <p class="sub" style="margin:.75rem 0 0">Needs a medical-liability answer before anything else &mdash; explaining results is closer to advice than to comparison shopping.</p>
+  </div>
+
+</main>
+</body>
+</html>
