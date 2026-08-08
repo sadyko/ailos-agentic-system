@@ -103,19 +103,120 @@ switches on status must learn them.
 - Accession barcodes and sample labels (`LAB_BARCODE_V1`)
 - Results entry, including multi-reference and age-based ranges
 - Verification, reporting, and archiving the result to the patient's documents
+- The panel settings screen, service↔panel linkage, and the named-range editor
+- A seeded panel catalogue — structure only, **no reference ranges**
 - Working end-to-end across registration → cashier → queue → results → patient card
 - Running on Windows, macOS and Linux
 - Usable on the clinic's tablets and phones over the LAN
 
 **Out of scope**
 
-- Importing the production panel catalogue. The server has 78 panels / 300
-  analytes, with heavy duplication (three different complete-blood-counts at 28, 21
-  and 14 analytes). Clinics build their own catalogue through `lab-settings.js`.
-  The handout seeds **one CBC fixture** purely so the workflow has something to
-  click through.
+- **Reference range values of any kind.** Ranges depend on the analyser and method
+  each lab uses; one clinic's ranges are wrong in another clinic. Every range field
+  is stripped from the seed and left for the clinic to fill in.
 - Any change to the server. It is a read-only reference throughout.
 - Syncing data between server and local. They are separate products.
+
+## Panels, services and the settings screen
+
+### The link
+
+`lab_panels.service_id` connects a panel to the service that is ordered and paid
+for. On the server **all 78 panels are linked; there are no orphans** — effectively
+one service, one panel. The local schema already has the column, and the local
+settings editor already references `service_id` in nine places.
+
+### The settings screen already exists
+
+Local `views/lab-settings.js` (419 lines) is at **capability parity with the
+server** — identical reference counts for every relevant feature:
+
+| Capability | Local | Server |
+|---|---|---|
+| `ref_ranges` (named ranges) | 17 | 17 |
+| `age_min` / `age_max` | 6 / 6 | 6 / 6 |
+| `service_id` (panel↔service) | 9 | 9 |
+| `value_options` (select lists) | 9 | 9 |
+| `group_label` | 11 | 11 |
+| `ref_low_m` (sex-specific) | 8 | 8 |
+
+It is marginally larger than the server's copy, so it carries local work the server
+does not. **This phase verifies the screen against the local API — it does not
+rebuild it, and the server's copy must not overwrite it.**
+
+### What the catalogue ships
+
+78 panels, 300 analytes, exported from the server.
+
+**Included:** panel name, code, modality, narrative flag, service link · analyte
+name, unit, result type, select options, decimals, group label, sort order.
+
+Result types in use: `numeric` (226), `text` (67), `select` (7). Select options are
+comma-separated strings, e.g. `O(I), A(II), B(III), AB(IV)`.
+
+**Excluded:** `ref_low`, `ref_high`, `ref_text`, `ref_ranges`, `ref_low_m`,
+`ref_high_m`, `ref_low_f`, `ref_high_f` — every range field, without exception.
+
+Duplication is minor: 78 panels resolve to 76 distinct names, i.e. **2 exact
+duplicates**. The differently-named complete-blood-count variants are separate
+records, not copies. Analytes repeating across panels (Лейкоциты in four) is
+correct clinical modelling — blood and urine both measure leukocytes — and must be
+preserved.
+
+### Normalisation
+
+The source data has ragged edges. The seed is normalised, and the session must
+**produce a complete list of every change made** for human review before it lands:
+
+- Stray whitespace — `RBC   Эритроциты`, `EOS%    Эозинофилы`
+- Typos — `Ср.обьём эр.` → `Ср.объём эр.`
+- Inconsistent units — `10*12/L`, `*10*9/L`, `g/l`, `мкмоль/л` mixing Latin and
+  Cyrillic and differing conventions
+- 125 of 300 analytes carry no unit; these are left empty, not guessed
+
+### Named ranges — the age/sex/phase engine
+
+`LAB_MULTI_REF_V1` holds named ranges as JSON on `lab_panel_analytes.ref_ranges`.
+The local column already exists. One entry:
+
+```json
+{ "label": "Фолликулярная фаза", "sex": "female",
+  "age_min": null, "age_max": null,
+  "low": null, "high": null, "text": "" }
+```
+
+`sex` is `male`, `female` or null. `age_min`/`age_max` are years. A range with
+neither bounds nor text carries no information and is discarded by `normRefRanges`.
+
+For hormone and cycle-dependent analytes the seed ships **labelled slots with empty
+numbers** — the phases correctly named and sexed (Фолликулярная фаза, Овуляция,
+Лютеиновая фаза, Менопауза; pregnancy trimesters; paediatric age bands where the
+analyte warrants one), with `low` and `high` blank. The clinic types its own
+numbers into a structure that is already right. No clinical values are shipped.
+
+**Safety rule, carried verbatim from the server implementation:** a matched range
+only marks the likely row on the printout. It must **never** auto-flag a result,
+because the app cannot know cycle phase or pregnancy status. A hormone flagged
+"high" against the wrong phase is a misleading report.
+
+### Why labelled empty slots work — do not "fix" this
+
+Two functions read `ref_ranges`, and they behave differently **on purpose**:
+
+| Function | File | Label-only slot |
+|---|---|---|
+| `normRanges` | `lab-settings.js:179` | **kept** — parses, does not filter |
+| `normRefRanges` | `laboratory.js:1385` | **discarded** — `.filter(x => x.low != null \|\| x.high != null \|\| x.text)` |
+
+The result is exactly the behaviour wanted: an unfilled slot appears in the
+settings editor as a named row with blank number boxes for the clinic to complete,
+and stays invisible on the patient's report until real numbers exist. The label
+input's own placeholder is `Менопауза`, confirming the intent.
+
+This reads like an inconsistency between two copies of the same logic. It is not.
+Unifying them breaks the feature in one direction or the other: filter in settings
+and the seeded phases vanish before anyone can fill them; stop filtering in the
+report and empty phase labels print on patient results.
 
 ## Schema changes — migration `040`
 
@@ -158,13 +259,17 @@ house rule for this build machine.
 | 1 | **Orient** — install, start, log in; confirm 39 migrations and 82 tables | app serves `/admin`; login succeeds |
 | 2 | **Schema** — migration `040` and the registry edits, with tests beside them | `npm test` green |
 | 3 | **Port the handling code** — replace `laboratory.js`; diff-and-merge `lab-settings.js` and `lab-barcode.js` | lab screen renders without console errors |
-| 4 | **Wire the workflow** — all six transitions, barcode, verify, document archive | every transition clicks through; document reaches the patient card |
-| 5 | **Across the app** — registration → cashier → queue → results → patient card → documents | one test patient completes the full journey |
-| 6 | **Devices and OS** — responsive lab screens; verified start on macOS and Linux | lab usable at tablet and phone widths; app starts on all three OSes |
+| 4 | **Panels and settings** — verify the settings screen against the local API; confirm service↔panel linkage; seed the catalogue with ranges stripped | a panel can be created, linked to a service, and edited; catalogue loads; change list reviewed |
+| 5 | **Wire the workflow** — all six transitions, barcode, verify, document archive | every transition clicks through; document reaches the patient card |
+| 6 | **Across the app** — registration → cashier → queue → results → patient card → documents | one test patient completes the full journey |
+| 7 | **Devices and OS** — responsive lab screens; verified start on macOS and Linux | lab usable at tablet and phone widths; app starts on all three OSes |
 
-Phases 1–5 are the handling system. Phase 6 covers the other two requirements, and
+Phases 1–6 are the handling system. Phase 7 covers the other two requirements, and
 comes last because there is nothing to make responsive or portable until the lab
 exists.
+
+Phase 4 sits before the workflow phase deliberately: results entry renders rows
+from a panel, so the workflow cannot be exercised end-to-end until panels exist.
 
 ### Notes per phase
 
@@ -181,14 +286,19 @@ locally than on the server**, meaning local carries work the server does not.
 Copying the server's version over them would be a regression. Diff each and merge
 deliberately; do not overwrite.
 
-**Phase 6, OS portability** — smaller than it sounds. There are no `.bat`, `.cmd`
+**Phase 4** — the catalogue is exported from the server with `sbq.py`, which is
+already permitted in this repo's `.claude/settings.local.json` and needs no new
+access. The export query must select the structural columns explicitly; a
+`select *` would carry the range columns straight through the exclusion.
+
+**Phase 7, OS portability** — smaller than it sounds. There are no `.bat`, `.cmd`
 or `.exe` artifacts, `server/` uses `path.join` throughout with zero hardcoded
 Windows paths, and `better-sqlite3` ships prebuilt binaries for darwin-x64,
 darwin-arm64, linux-x64, linux-arm64, linuxmusl and win32. This is verification
 and documentation, not a rewrite. `SETUP.md` needs updating — it currently assumes
 a Windows server PC.
 
-**Phase 6, devices** — a foundation exists: `admin-views.css` has 32 media queries
+**Phase 7, devices** — a foundation exists: `admin-views.css` has 32 media queries
 and `admin.css` has 6. The work is extending that to the lab screens, and checking
 touch targets on the queue and results modal.
 
@@ -201,7 +311,13 @@ breaks on Windows with Node 24). New work follows the same pattern:
 - Migration `040` gets `040.test.js`, matching the existing migration tests
 - Registry changes get assertions that the new columns are readable and writable by role `lab`, and rejected for roles that should not have them
 - The state machine gets tests for each transition, including the illegal ones
-- Phase 5 is a manual end-to-end walkthrough; phases 2–4 are automated
+- The seed gets a test asserting **no range field is populated** on any seeded
+  analyte — the one guarantee that must not silently regress
+- The two range readers get tests pinning their **deliberately different**
+  behaviour on a label-only slot: `normRanges` (settings) preserves it,
+  `normRefRanges` (report) discards it. See the note below — this looks like an
+  inconsistency and must not be "fixed"
+- Phase 6 is a manual end-to-end walkthrough; phases 2–5 are automated
 
 ## Risks
 
