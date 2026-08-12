@@ -1845,11 +1845,17 @@ Create `scripts/grant_admin.py`:
 ```python
 """One-off: make a phone number an Admin-API administrator.
 
-    python scripts/grant_admin.py +998901234567 "new-password"
+    $env:SYMPTEX_ADMIN_PASSWORD = "..."      # PowerShell
+    export SYMPTEX_ADMIN_PASSWORD='...'      # bash
+    python scripts/grant_admin.py +998901234567
+
+The password comes from the environment, never from argv: a command-line argument
+is visible in shell history and in the process list of every other user on the box.
 
 Ensures the users row exists, is active, carries the admin role and has a password
 hash. Idempotent. Prints what it changed. Run on the server (or locally with .env).
 """
+import os
 import sys
 from pathlib import Path
 
@@ -1861,10 +1867,14 @@ from app.extensions import sb                                  # noqa: E402
 
 
 def main():
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 2:
         print(__doc__)
         return 1
-    raw_phone, password = sys.argv[1], sys.argv[2]
+    raw_phone = sys.argv[1]
+    password = os.environ.get("SYMPTEX_ADMIN_PASSWORD") or ""
+    if not password:
+        print("Set SYMPTEX_ADMIN_PASSWORD in the environment first (see the docstring).")
+        return 1
     if len(password) < 8:
         print("Refusing: choose a password of at least 8 characters.")
         return 1
@@ -1925,25 +1935,35 @@ if __name__ == "__main__":
 
 - [ ] **Step 2: Run it against the live database**
 
-Ask the owner for the phone number they want to use and a password of their choosing (at least 8 characters). Then:
+The owner supplied these on 2026-08-12: phone **+998 33 322 22 88**, and a password
+of their choosing. **The password must never be written into a file, a commit, a log
+line, or a command argument** — pass it through the environment and clear it after:
 
 ```powershell
 cd C:\Users\user\Desktop\symptex-next
-.\.venv\Scripts\python scripts\grant_admin.py "+998XXXXXXXXX" "<owner's password>"
+$env:SYMPTEX_ADMIN_PASSWORD = "<the password the owner gave>"
+.\.venv\Scripts\python scripts\grant_admin.py "+998333222288"
+Remove-Item Env:\SYMPTEX_ADMIN_PASSWORD
 ```
 
-Expected final line: `OK: +998XXXXXXXXX can now sign in to Symptex Admin.`
+Expected final line: `OK: +998333222288 can now sign in to Symptex Admin.`
+
+The script stores only a hash (`auth.set_password` → werkzeug), never the password
+itself.
 
 - [ ] **Step 3: Prove login works end to end against the local server**
 
 With `flask run` up:
 
 ```powershell
-$body = @{ phone = "+998XXXXXXXXX"; password = "<owner's password>" } | ConvertTo-Json
+$env:SYMPTEX_ADMIN_PASSWORD = "<the password the owner gave>"
+$body = @{ phone = "+998333222288"; password = $env:SYMPTEX_ADMIN_PASSWORD } | ConvertTo-Json
 $r = Invoke-RestMethod -Uri http://127.0.0.1:5000/api/admin/v1/auth/login -Method Post -Body $body -ContentType "application/json"
 $r.user
 $r.token.Substring(0,10) + "..."
 ```
+
+Never print `$body` or the full token to the transcript.
 
 Expected: the user object prints and a token is returned. **This is an acceptance criterion of Piece 1 — do not proceed until it passes.**
 
