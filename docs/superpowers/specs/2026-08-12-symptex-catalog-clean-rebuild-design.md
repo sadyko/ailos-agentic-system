@@ -1,9 +1,9 @@
 # Symptex — services catalog clean rebuild (design)
 
 Date: 2026-08-12
-Status: **BLOCKED** — the owner's decisions are recorded and still stand, but the target
-database is not the one assumed. See "Blocker: the catalog lives in medcore". Do not
-execute the order of operations below until that is resolved.
+Status: target corrected to **medcore** and verified; owner confirmed the EasyMed/Symptex
+catalog sharing is intentional. One open decision remains — Uzbek coverage for services and
+types. The order of operations below still needs rewriting against medcore before execution.
 Supersedes the plan in `2026-08-12-symptex-catalog-v9-rebuild-handout.md`
 
 ## Summary
@@ -190,13 +190,64 @@ live, so replacing it changes what every EasyMed clinic sees when adding a servi
 **Not yet established, because medcore cannot be queried:** its catalog schema, what else
 references its `services` table inside medcore, and whether other EasyMed data depends on it.
 
-### What is needed to unblock
+### Resolved — medcore verified 2026-08-12
 
-Either read access to medcore (`yolpfhwtjdltjuwfkegf`) so the same verification done for
-Symptex can be done there, or a decision to treat the rebuild as an EasyMed-side change.
-An attempt to create `sbq_mc.py` — a read-only copy of the existing tool pointed at the
-medcore ref — was refused by the permission classifier, as was one impact query against
-EasyMed. Both need the owner's explicit go-ahead.
+The owner confirmed the sharing is intentional and authorised read access.
+`C:\Users\user\.claude\easymed-tools\sbq_mc.py` now exists: read-only by construction
+(refuses anything that is not a single SELECT/WITH, sends `read_only: true`), pointed at
+`yolpfhwtjdltjuwfkegf`. It authenticates with `sx_token.txt` — `sb_token.txt` returns 403
+on this project.
+
+Measured in medcore:
+
+| | |
+|---|---|
+| Tables (public) | 19 |
+| services / service_types / service_categories / service_groups | 1229 / 81 / 138 / 5 |
+| Hierarchy | **legacy chain only** — `services.service_category_id`, `service_categories.service_type_id`, `service_types.service_group_id`, all 100% populated |
+| v6 columns | **do not exist** |
+| Foreign keys referencing the catalog | **none at all** |
+| Rows referencing the catalog | `clinic_services` 5, `lab_panels` 3 — **8 in total** |
+| specialties | 50, with ru + uz + en complete |
+
+Two consequences that simplify the work:
+
+- **The dual-hierarchy trap is a mirror-only artefact.** Medcore has one chain, so the sheet
+  mapping is unambiguous: Groups → `service_groups`, sheet *Categories* → `service_types`,
+  sheet *Types* → `service_categories`, Services → `services`.
+- **The blast radius is 8 rows.** Nothing physically blocks a delete either, since the
+  catalog carries no foreign keys — which also means the database will not protect us, so
+  the backup in step 0 matters more, not less.
+
+The workbook's 50 specialties are the same 50 slugs medcore already holds, already complete
+in all three languages. Importing them into medcore is a no-op; Symptex's mirror is what
+lacks them (0 rows), and it should get them by syncing from medcore, not from the workbook.
+
+### Open: the Uzbek and English fields
+
+Measured coverage, workbook against medcore:
+
+| Level | Medcore now | Workbook |
+|---|---|---|
+| Groups | ru 5/5, uz 5/5 | ru 7/7, uz 7/7 |
+| Categories (→ `service_types`) | ru 81/81, uz 81/81 | ru 29/29, uz 29/29 |
+| Types (→ `service_categories`) | ru 138/138, uz 138/138 | ru 204/204, **uz 0/204** |
+| Services | ru 1229/1229, uz 1229/1229, **en 0** | ru 1797/1797, **uz 0/1797**, **en 0/1797** |
+| Specialties | ru/uz/en 50/50 | ru/uz/en 50/50 |
+
+A wipe-and-import therefore replaces complete Uzbek coverage with none, on 204 types and
+1797 services, on a site that publishes `/uz/` pages and a `sitemap-uz.xml`.
+
+The Uzbek being lost is machine-translated and demonstrably faulty — `Общий анализ крови
+(ОАК)` is stored as `Qonning umumiy tahlili (Eman)`, having translated the abbreviation ОАК
+into the Uzbek word for the oak tree; `АЛТ (alanine аминотрансфераза)` carries its broken
+Russian straight into `ALT (alanine aminotransferaza)`. It is not content worth preserving
+on its own merits, but it is currently the only Uzbek there is.
+
+English is absent for services on both sides — no regression, no gain.
+
+**This needs an owner decision before the import is written.** It does not block the rest of
+the design.
 
 ## Design (blocked — assumes a target that is not the live one)
 
