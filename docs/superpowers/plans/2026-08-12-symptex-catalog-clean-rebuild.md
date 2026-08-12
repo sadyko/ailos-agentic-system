@@ -849,11 +849,22 @@ Expected: `backup OK <path>`. If this fails, **stop** and re-run Task 1.
 
 - [ ] **Step 2: Delete Medion and the Symptex catalog**
 
+`--yes` now requires `--backup DIR`, and the gate is not mere presence: the manifest must
+list every table about to be deleted with counts equal to the live ones. A backup taken
+before the last few edits is more dangerous than none, because it restores something that
+looks right and isn't.
+
 ```bash
-ssh root@45.77.242.169 "cd /var/www/symptex-next-dev && set -a && . /var/www/symptex-next/.env && set +a && /var/www/symptex/venv/bin/python scripts/catalog_wipe.py --target symptex --clinic --catalog --yes"
+ssh root@45.77.242.169 "cd /var/www/symptex-next-dev && /var/www/symptex/venv/bin/python scripts/catalog_wipe.py --target symptex --clinic --clinic-id 8ada8719-c95f-474f-870e-fad49b460447 --catalog --yes --backup /root/catalog/backup/20260812T155246Z"
 ```
 
-Expected: the Medion delete line, `clinics remaining: 0`, then `services 1229 -> 0`, `service_categories 138 -> 0`, `service_types 81 -> 0`.
+Expected: `backup verified: …`, the Medion delete line, `clinics remaining: 0`, then
+`services 1229 -> 0`, `service_categories 138 -> 0`, `service_types 81 -> 0`.
+
+`--clinic-id` is mandatory whenever more than one clinic exists. Deleting "the clinic" was
+authorised while Medion was the only one; symptex.uz is live and clinics can register, so a
+second row means the authorised thing and the actual thing have diverged. If the script
+refuses here, **stop** — do not pass a different id without asking the owner.
 
 - [ ] **Step 3: Verify the cascade took the prices**
 
@@ -867,10 +878,20 @@ Expected: `0, 0, 0, 0, 5` — groups survive by design.
 - [ ] **Step 4: Delete the medcore catalog**
 
 ```bash
-ssh root@45.77.242.169 "cd /var/www/symptex-next-dev && set -a && . /var/www/symptex-next/.env && set +a && /var/www/symptex/venv/bin/python scripts/catalog_wipe.py --target medcore --catalog --yes"
+ssh root@45.77.242.169 "cd /var/www/symptex-next-dev && /var/www/symptex/venv/bin/python scripts/catalog_wipe.py --target medcore --catalog --yes --backup /root/catalog/backup/20260812T155246Z"
 ```
 
-Expected: `services 1229 -> 0`, `service_categories 138 -> 0`, `service_types 81 -> 0`.
+Expected: `backup verified: …`, then `services 1229 -> 0`, `service_categories 138 -> 0`,
+`service_types 81 -> 0`.
+
+**medcore has no foreign keys on the catalog**, so a partially-committed delete would leave
+services pointing at deleted category ids — invisible to any constraint and still served to
+symptex.uz by the gateway. The script recounts after each table and refuses to touch the
+parent if rows survive. That stop is resumable: the order is children-first, so re-running
+continues where it left off. Do not work around it.
+
+Note medcore also holds **10 clinics** (it is shared with EasyMed). They are not touched —
+`--clinic` is rejected for this target.
 
 - [ ] **Step 5: Import structure and names into medcore**
 
