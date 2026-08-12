@@ -2632,6 +2632,7 @@ export interface DashboardSummary {
   bookings_by_status: { new: number; confirmed: number; completed: number; cancelled: number }
   bookings_by_day: DaySeriesPoint[]
   new_users_by_day: DaySeriesPoint[]
+  /** Busiest clinics within `window_days`, not all-time. */
   top_clinics: { clinic_id: string; name: string; n: number }[]
   recent_bookings: {
     id: string
@@ -2641,6 +2642,10 @@ export interface DashboardSummary {
     starts_at: string | null
     created_at: string
   }[]
+  /** Period the series and top_clinics cover. */
+  window_days: number
+  /** True if a window query hit its row ceiling — the UI must warn, not under-report. */
+  truncated: boolean
 }
 
 export interface ClinicRow {
@@ -3417,6 +3422,8 @@ const SUMMARY: DashboardSummary = {
     id: 'b-1', clinic_name: 'Клиника А', patient_name: 'Иванов',
     status: 'confirmed', starts_at: null, created_at: '2026-08-12T10:00:00',
   }],
+  window_days: 14,
+  truncated: false,
 }
 
 describe('DashboardScreen', () => {
@@ -3449,6 +3456,18 @@ describe('DashboardScreen', () => {
     render(<DashboardScreen />)
     expect(await screen.findByRole('alert')).toHaveTextContent(/cannot reach/i)
     expect(screen.queryByText('0')).not.toBeInTheDocument()
+  })
+
+  it('warns when the server says the figures were truncated', async () => {
+    vi.spyOn(api, 'dashboard').mockResolvedValue({ ...SUMMARY, truncated: true })
+    render(<DashboardScreen />)
+    expect(await screen.findByText(/неполные данные/i)).toBeInTheDocument()
+  })
+
+  it('says what period the charts cover, so 14-day figures are not read as all-time', async () => {
+    vi.spyOn(api, 'dashboard').mockResolvedValue(SUMMARY)
+    render(<DashboardScreen />)
+    expect(await screen.findByText(/14 дн/i)).toBeInTheDocument()
   })
 
   it('has no accessibility violations', async () => {
@@ -3553,6 +3572,14 @@ export function DashboardScreen() {
     <div className="p-6">
       <h1 className="mb-4 text-xl font-semibold">Обзор</h1>
 
+      {data.truncated && (
+        <p role="status"
+           className="mb-4 border-l-4 border-warn bg-warn/10 px-3 py-2 text-sm text-ink-900">
+          Неполные данные: за выбранный период записей больше, чем удалось загрузить.
+          Графики за период занижены — итоговые суммы вверху верны.
+        </p>
+      )}
+
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
         <StatTile label="Клиники" value={data.totals.clinics}
                   sub={`активных: ${data.totals.clinics_active}`} />
@@ -3564,8 +3591,9 @@ export function DashboardScreen() {
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
-        <BarChart title="Записи за 14 дней" points={data.bookings_by_day} />
-        <BarChart title="Новые пользователи за 14 дней" points={data.new_users_by_day} />
+        <BarChart title={`Записи за ${data.window_days} дн.`} points={data.bookings_by_day} />
+        <BarChart title={`Новые пользователи за ${data.window_days} дн.`}
+                  points={data.new_users_by_day} />
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">

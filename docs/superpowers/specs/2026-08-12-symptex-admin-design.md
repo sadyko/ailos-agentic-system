@@ -152,9 +152,26 @@ and no figure is estimated.
   "new_users_by_day":  [{"date": "2026-08-01", "n": 0}],
   "top_clinics":       [{"clinic_id": "...", "name": "...", "n": 0}],
   "recent_bookings":   [{"id": "...", "clinic_name": "...", "patient_name": "...",
-                         "status": "...", "starts_at": null, "created_at": "..."}]
+                         "status": "...", "starts_at": null, "created_at": "..."}],
+  "window_days": 14,
+  "truncated": false
 }
 ```
+
+**No figure here may be a silent sample.** (Corrected 2026-08-12 after review — the
+first draft of this spec had `totals.bookings` as an exact count while the status
+breakdown and series came from the 3000 most recent rows. Past 3000 bookings the
+owner would have read a total that its own breakdown could not reconcile with, with
+nothing on the page admitting it was a sample.)
+
+- `bookings_by_status` is **four exact count queries**, one per bucket — not a tally
+  of sampled rows.
+- The two day series query the 14-day window directly (`created_at >= cutoff`), so
+  they are complete for the period rather than whatever fell inside a row cap.
+- `top_clinics` is therefore "busiest in the last 14 days", not all-time.
+- `window_days` states the period the series and `top_clinics` cover.
+- `truncated` is true only if a window query hit its row ceiling, so the UI can warn
+  rather than quietly under-report.
 
 - Day series cover the **last 14 days**, zero-filled so the chart has no gaps.
 - `top_clinics` is the top 5 by booking count.
