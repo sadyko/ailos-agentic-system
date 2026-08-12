@@ -1859,7 +1859,14 @@ import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(_ROOT))
+
+# create_app() reads os.environ only — it does NOT load .env itself (verified
+# 2026-08-12). wsgi.py is what loads it in production, so a script that skips
+# wsgi must do this or sb() silently runs offline and every write no-ops.
+from dotenv import load_dotenv                                # noqa: E402
+load_dotenv(_ROOT / ".env")
 
 from app import create_app                                    # noqa: E402
 from app import auth                                          # noqa: E402
