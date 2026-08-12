@@ -507,6 +507,11 @@ def run(path, apply, allow_mass=False, target="symptex", enrich_only=False):
 
 Replace `Importer.__init__` and add client/filtering. In `scripts/sync_catalog_v5.py`:
 
+> **`slug_fixed` must survive this edit.** Commit `635aca0` (SLUG_CLEAN_V1) added a
+> `slug_fixed` counter to `self.log` and increments it inside `sync()`. Dropping the key
+> from the dict below would raise `KeyError` on the first owner-typed slug that needed
+> normalising. It is included — do not "tidy" it away.
+
 ```python
     def __init__(self, apply, allow_mass_deactivate=False, target="symptex",
                  enrich_only=False):
@@ -515,7 +520,7 @@ Replace `Importer.__init__` and add client/filtering. In `scripts/sync_catalog_v
         self.target = target
         self.enrich_only = enrich_only
         self.log = {"insert": 0, "update": 0, "deactivate": 0,
-                    "slug_made": 0, "skip_empty": 0, "missing": 0}
+                    "slug_made": 0, "slug_fixed": 0, "skip_empty": 0, "missing": 0}
 
     def _c(self):
         from .catalog_targets import client
