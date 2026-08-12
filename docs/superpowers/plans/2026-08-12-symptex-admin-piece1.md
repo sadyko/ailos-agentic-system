@@ -2133,17 +2133,18 @@ Add to `package.json` `"scripts"`:
 }
 ```
 
-- [ ] **Step 4: Set the brand tokens from the live site**
+- [ ] **Step 4: Set the design tokens**
 
-Read the real palette rather than inventing one:
+**Owner's decision (2026-08-12): the admin program does NOT follow the public
+symptex.uz design system.** That system — square corners, serif headings, teal for
+action and periwinkle for reference, never red — is for the patient-facing site.
+This is an internal tool used for hours at a time, so it gets a plain, functional
+look optimised for reading data quickly. Do not import the public site's CSS and do
+not copy its editorial spacing.
 
-```bash
-ssh root@45.77.242.169 "grep -oE '\-\-[a-z0-9-]+: *[^;]+;' /var/www/symptex-next/static/css/symptex.css | head -40"
-```
-
-Create `src/index.css` using those values. If the grep returns nothing usable, use
-the calm-clinical fallback below — it satisfies the medical palette rule in
-`CLAUDE.md` (no harsh black/white, no shadcn grey):
+The palette below is still calm-clinical rather than shadcn grey, per `CLAUDE.md`.
+Unlike the public site, a danger colour **is** used here — an admin needs errors to
+be unmistakable. Create `src/index.css`:
 
 ```css
 @import "tailwindcss";
