@@ -108,6 +108,14 @@ Nothing else in this plan may run until this task is complete and the dump is of
 **Files:**
 - Create: `/var/www/symptex-next-dev/scripts/catalog_backup.py`
 
+> **The code blocks below are the original draft. Review found four defects in them; the
+> versions committed on `feat/catalog-v5-rebuild` are authoritative.** Fixed after review:
+> paged reads now `.order()` (unordered paging can drop a row across a page boundary while
+> the count still reads 1229 — and `registrator_clinics` has no `id`, so it orders on
+> `user_id`); `catalog_targets.py` calls `load_dotenv()` with an explicit path so the
+> documented command works standalone; `filter_payload` no longer waves through the three
+> v6 parent columns medcore lacks; and `MANIFEST.json` now carries the restore recipe.
+
 - [ ] **Step 1: Write the backup script**
 
 ```python
@@ -571,6 +579,32 @@ Also skip the deactivate pass entirely when enriching — add immediately before
         if self.enrich_only:
             return by_rowno
 ```
+
+- [ ] **Step 5b: Gate specialties and filters on the Symptex target**
+
+`run()` currently syncs both unconditionally. Under `--target medcore` that would (a) update
+medcore's 50 already-complete specialties with a structure-only payload, and (b) write
+**Symptex's** `catalog_filters` during a medcore run, because `_sync_filters` calls `sb()`
+directly rather than the target's client. Both tables are Symptex-only in this rebuild.
+
+Wrap the two existing calls at the end of `run()`:
+
+```python
+    # Symptex-only. medcore's specialties are already complete in ru/uz/en and are
+    # deliberately never written; catalog_filters exists only in Symptex, and
+    # _sync_filters() uses sb() directly, so it must not run under another target.
+    if target == "symptex":
+        if "Specialties" in wb.sheetnames:
+            imp.sync("specialties", _rows(wb["Specialties"]), text_cols=SPEC_TEXTS)
+            print("  specialties", {k: imp.log[k]-base[k] for k in imp.log})
+        if "Filters" in wb.sheetnames:
+            print("  filters     rows:", _sync_filters(wb["Filters"], apply=apply))
+```
+
+Note `catalog_filters` deliberately has **no** `ALLOW` entry and must not be routed through
+`filter_payload` — `_sync_filters` builds its own payload against 11 columns
+(`group_slug`, `filter_key`, `label_*`, `source`, `values`, `indexable`, `landing_*`) and
+the table has no `slug`, so filtering it would strip every column to nothing.
 
 - [ ] **Step 6: Add the CLI flags**
 
