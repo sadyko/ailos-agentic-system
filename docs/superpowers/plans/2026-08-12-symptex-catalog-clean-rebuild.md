@@ -22,6 +22,7 @@ Read before touching anything.
 - **Always invoke the SQL tools by absolute path**, e.g. `python C:/Users/user/.claude/easymed-tools/sbq_mc.py "<sql>"`. Relative invocations fall through the permission allowlist and get denied.
 - `sbq_mc.py` and `sbq_sx.py` truncate output at 6000 chars. Aggregate in SQL; page with `limit`/`offset` under ~120 rows per call.
 - **The gateway caches for 30 minutes** (`_TTL = 1800` in `app/services/core_gateway.py`). `systemctl reload symptex-next` clears it.
+- **Import order in `scripts/sync_catalog_v5.py` is load-bearing.** `app/config.py:52` reads `os.environ` in the `Config` **class body**, which executes on the first `import app`. `scripts/catalog_targets.py` calls `load_dotenv()` at import. So `catalog_targets` must be imported *before* `app`, or `Config` is built from an empty environment: `client("symptex")` raises "missing credentials", and — worse — `_sync_filters` writes nothing through an offline `sb()` while reporting success. Pinned by `test_catalog_targets_is_imported_before_app`; the `# noqa: E402` markers advertise the file as import-unusual, and an import sorter would undo it silently.
 - **Column allowlists are not optional.** medcore's `services` has no `preparation_ru`, no `description_en`, no `synonyms_*`. medcore's `service_groups`/`service_types` have no `meta_*`, `keywords_*` or `faq_*`. Writing them raises PostgREST errors and aborts a partially-applied import.
 
 ### Schema reference (measured 2026-08-12)
