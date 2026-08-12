@@ -159,11 +159,17 @@ and no figure is estimated.
 - Day series cover the **last 14 days**, zero-filled so the chart has no gaps.
 - `top_clinics` is the top 5 by booking count.
 - `recent_bookings` is the newest 10.
-- `services_listed` counts **active `department_services` rows belonging to
-  departments of active clinics** — i.e. services a patient could actually be
-  offered, not catalog size. (The 1229-row `services` catalog is reference data and
-  is deliberately not reported here.)
+- `services_listed` counts rows in **`department_services`** — services that clinics
+  actually list with a price, not catalog size. (The 1229-row `services` table is
+  reference data and is deliberately not reported here.) Checked 2026-08-12:
+  `department_services` has no `is_active` column and is never filtered by one
+  anywhere in the codebase, so no active-filter is applied.
 - `clinics_active` counts `clinics.is_active = true`.
+- `totals.bookings` is an **exact count query**. The existing panel version
+  (`_stats_data`, line 344) reports `len(rows)` over a query capped at 3000, so it
+  silently stops being a total past 3000 bookings; the API must not copy that.
+- Bookings with `status = 'unverified'` are excluded everywhere, matching the panel —
+  those are captured-but-unconfirmed leads that never reached a clinic.
 - Status grouping reuses the existing constants in `services/clinic_services.py`
   (verified 2026-08-12, lines 297–300) so the dashboard and the clinic panel can
   never disagree about what "confirmed" means:
