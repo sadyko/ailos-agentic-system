@@ -1109,7 +1109,9 @@ ssh root@45.77.242.169 "cd /var/www/symptex-next-dev && set -a && . /var/www/sym
 
 Expected: `enrich_only=True`, with `update` counts of 7, 29, 204 and 1797, `insert` 0, `deactivate` 0, and **`missing` 0**.
 
-A non-zero `missing` means a workbook slug has no mirrored row — the mirror is incomplete. Stop and re-run Task 6 rather than letting the importer insert an unmirrored row.
+Read `update` as **rows matched by slug, not rows written**. Under `--enrich-only` the payload is no longer force-stamped with `is_active=True`, so a row whose every column is stripped by `filter_payload` produces an empty payload; `if self.apply and payload` correctly skips the write while the counter still increments. That cannot happen on a normal run, only an enrich one.
+
+A non-zero `missing` is a **stop condition, not a warning** — it means a workbook slug has no mirrored row. Enrich deliberately never populates parent columns, so continuing past a non-zero `missing` leaves silent holes in the hierarchy that nothing downstream will flag. Re-run Task 6 instead of letting the importer insert an unmirrored row.
 
 - [ ] **Step 2: Apply it**
 
