@@ -3598,7 +3598,11 @@ export function DashboardScreen() {
 
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <section className="rounded-xl border border-ink-200 bg-card p-4">
-          <h2 className="mb-3 text-sm font-medium text-ink-700">Записи по статусу</h2>
+          {/* The period MUST be on the heading. This block is all-time exact counts
+              while the charts beside it cover window_days — verified against live
+              data on 2026-08-12, where the breakdown read 15 and the 14-day chart
+              read 0. Both were right; unlabelled, they look contradictory. */}
+          <h2 className="mb-3 text-sm font-medium text-ink-700">Записи по статусу · за всё время</h2>
           <ul className="space-y-1.5 text-sm">
             {(Object.keys(STATUS_LABEL) as (keyof typeof STATUS_LABEL)[]).map((key) => (
               <li key={key} className="flex justify-between">
@@ -3610,9 +3614,16 @@ export function DashboardScreen() {
         </section>
 
         <section className="rounded-xl border border-ink-200 bg-card p-4">
-          <h2 className="mb-3 text-sm font-medium text-ink-700">Клиники с наибольшим числом записей</h2>
+          <h2 className="mb-3 text-sm font-medium text-ink-700">
+            Клиники с наибольшим числом записей · за {data.window_days} дн.
+          </h2>
           {data.top_clinics.length === 0 ? (
-            <p className="text-sm text-ink-500">Пока нет записей.</p>
+            /* Live data on 2026-08-12 hit exactly this: 15 bookings all-time but
+               none inside the window. "Пока нет записей" would have been a lie —
+               say what is actually true about the period. */
+            <p className="text-sm text-ink-500">
+              За последние {data.window_days} дн. записей не было.
+            </p>
           ) : (
             <ul className="space-y-1.5 text-sm">
               {data.top_clinics.map((c) => (
