@@ -106,11 +106,46 @@ supplement. No supplement covers surgery.
 every level**; `name_en` 0 on services; **0 descriptions**. Specialties: 50, complete in
 ru/uz/en — the same 50 slugs the workbook carries, so importing them there is a no-op.
 
-**No foreign keys reference the catalog at all.** Nothing physically blocks a delete, and
-nothing protects against a mistake either — which makes the backup more important, not less.
+~~**No foreign keys reference the catalog at all.**~~ **This was wrong. Corrected below.**
 
 Rows referencing the catalog anywhere in medcore: `clinic_services` 5, `lab_panels` 3 —
 **8 in total.**
+
+#### Correction — medcore's foreign keys, measured properly (2026-08-12)
+
+The "no foreign keys" claim came from a query against
+`information_schema.constraint_column_usage`, which returned empty. It is false, and the
+Task 5 delete was refused by one of these constraints before it changed anything.
+`pg_constraint` gives the real map:
+
+```
+services.service_category_id        -> service_categories   ON DELETE CASCADE
+service_categories.service_type_id  -> service_types        ON DELETE CASCADE
+service_types.service_group_id      -> service_groups       ON DELETE CASCADE
+clinic_services.core_service_id     -> services             ON DELETE CASCADE   (5 rows)
+lab_panels.core_service_id          -> services             NO ACTION           (3 rows)
+```
+
+Two things the original text got backwards:
+
+- The catalog chain is **CASCADE**, so deleting a parent takes its children with it.
+  Children-first ordering is belt-and-braces, not strictly required.
+- The 8 referencing rows do **not** merely dangle. `clinic_services` is `NOT NULL` +
+  CASCADE, so those 5 rows are **destroyed** by the delete, silently, with no way to
+  preserve them through it. `lab_panels` is nullable + NO ACTION, so it **blocks** the
+  delete until the link is released.
+
+Those 5 `clinic_services` rows belong to **VITA (main)** — an EasyMed clinic, not Symptex —
+priced 25 000 to 1 200 000 UZS. medcore's EasyMed side also holds 10 clinics, 44 doctors
+and 5 patients, none of which this rebuild touches.
+
+**Owner decision 7, taken with the above in front of them: let the links go.** The cascade
+may destroy VITA's 5 `clinic_services` rows; the 3 `lab_panels` links are released to NULL
+first so the panels themselves survive. Both are recoverable only from the step-0 backup,
+by manual re-entry in EasyMed.
+
+The lesson worth keeping: `information_schema.constraint_column_usage` silently under-reports.
+Use `pg_constraint` when the answer matters.
 
 ### Symptex (mirror + editorial + marketplace)
 
