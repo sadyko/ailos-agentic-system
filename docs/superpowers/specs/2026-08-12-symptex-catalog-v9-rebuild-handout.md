@@ -1,10 +1,51 @@
 # Symptex — services catalog v9 rebuild (master prompt / handout)
 
-> **Paste everything below the line into a fresh Claude Code chat** opened in
-> `c:\Users\user\Desktop\ailos-agentic system`. It is self-contained.
+> # ⛔ SUPERSEDED 2026-08-13 — DO NOT USE THIS PLAN
 >
-> Written 2026-08-12 after verifying live state directly. Every number below was
-> measured, not assumed.
+> **This document analysed the wrong file.** I picked `service complete list v9.xlsx`
+> off its version number. The owner's actual current list is
+> `service complete list (v5 first-row preview).xlsx` — modified **2026-08-12 19:05**,
+> six days NEWER than v9 and 6× larger (904 KB vs 146 KB). The "v9" name is misleading:
+> it is an older, partial export.
+>
+> **And the rebuild this document plans has already happened.** v5 is imported and live.
+> Verified 2026-08-13, v5 file vs live database:
+>
+> | | v5 file | live DB | |
+> |---|---|---|---|
+> | Groups | 7 | 7 | slugs identical |
+> | Categories (level 2) | 29 | `service_types` 29 | slugs identical |
+> | Types (level 3) | 204 | `service_categories` 204 | slugs identical |
+> | Services | 1797 | 1797 | 1796 identical, 1 differs |
+> | Specialties | 50 | 50 | — |
+> | Filters | 23 | `catalog_filters` 23 | — |
+>
+> **Every "blocker" below is void:**
+> - *Blocker 1 (hierarchy mismatch)* — resolved. The dead v6 parent columns
+>   (`services.service_type_id` etc.) have been **dropped**; only the legacy chain remains,
+>   and the importer maps the sheets onto it positionally — exactly the Option A this
+>   document recommended.
+> - *Blocker 2 (only 2 of 5 groups)* — an artifact of v9. v5 covers **6 groups**, including
+>   **dentistry** and **aesthetics**, which v9 has no trace of.
+> - *"411 live pages would die"* — an artifact of diffing live against the older v9.
+>   v5 vs live differ by exactly **one** row.
+> - *"specialties and filters are empty, never applied"* — both are now populated (50 / 23).
+>
+> **The one real discrepancy, still unfixed:** v5 `Services` **row 83**,
+> «Калий (K+, Potassium, калий крови)», has its `slug` overwritten with the single letter
+> **`k`**. Live holds the correct `kaliy-k-potassium-kaliy-krovi`. Re-importing v5 as-is
+> would deactivate the correct page and mint `/…/elektrolity-i-mineraly/k`. Fix the cell
+> before any re-import.
+>
+> **What IS still true and still open** (measured 2026-08-13, independent of this mix-up):
+> - Googlebot spends about half its crawl on 404s — 177 of 363 sampled requests — against an
+>   abandoned **English-slug** URL scheme (`/ru/services/laboratory/general-clinical/stool/
+>   calprotectin-fecal`). Those slugs appear in neither v5 nor v9. Needs a 301/410 map.
+> - Server capacity: see [[symptex-gateway-fragility]].
+> - Service-card layout breaks on 216–230 character names.
+>
+> Kept only as a record of how the wrong-file analysis was reached.
+> **Lesson: check file mtime and size before trusting a version number in a filename.**
 
 ---
 
